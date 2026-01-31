@@ -170,58 +170,94 @@ No overlap with Learn questions or previous phases
 How to Run the Program
 1. Install dependencies
 npm install
+```
+Key files:
+- CLI: [src/cli/generate.js](src/cli/generate.js)  
+- Config: [config/selection_rules.json](config/selection_rules.json)  
+- Package metadata: [package.json](package.json)  
+- Registry: [data/registry/usage_registry.json](data/registry/usage_registry.json)
 
-2. Generate Learn questions (fresh start)
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode learn --reset-registry
+## Configure Defaults
 
-3. Generate another Learn set (no repetition)
+Create a `.env` file at the repository root to supply local defaults:
+```env
+DEFAULT_DATASET=datasetA
+DEFAULT_INPUT_PATH=data/input/datasetA.csv
+DEFAULT_MODE=learn
+```
+The CLI will use these defaults when flags are omitted.
+
+## 🏃 Execution Commands
+
+The program supports two main execution styles: Shortcuts for common tasks and Manual Flags for full control.
+
+### 1. Shortcut Commands
+Add short npm scripts (example to paste into the `scripts` object in [package.json](package.json)):
+```json
+"scripts": {
+	"generate": "node src/cli/generate.js",
+	"gen:learn": "node src/cli/generate.js -- --mode learn",
+	"gen:learn:reset": "node src/cli/generate.js -- --mode learn --reset-registry",
+	"gen:challenge": "node src/cli/generate.js -- --mode challenge"
+}
+```
+Examples (using defaults from `.env` or passing dataset):
+```bash
+npm run gen:learn
+npm run gen:learn:reset -- --dataset datasetA
+npm run gen:challenge -- --dataset datasetA --phase 1
+```
+
+### 2. Manual Commands (with Flags)
+Use the base `generate` script and pass flags after `--` to override defaults.
+
+- Generate Learn (explicit):
+```bash
 npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode learn
+```
+- Generate Learn and reset registry:
+```bash
+npm run generate -- --mode learn --reset-registry
+```
+- Generate Challenge phase 2:
+```bash
+npm run generate -- --mode challenge --phase 2 --dataset datasetA
+```
 
-4. Generate Challenge questions (Phase 1)
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode challenge --phase 1
+## 🚩 Command Flag Reference
 
-5. Generate next Challenge phase
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode challenge --phase 2
+- `-d`, `--dataset` : The dataset name (e.g., `datasetA`, `leetcode`).  
+- `-i`, `--input` : Path to the CSV file (inferred from dataset if omitted).  
+- `-m`, `--mode` : `learn` or `challenge`.  
+- `-p`, `--phase` : Challenge phase number (default `1`).  
+- `-R`, `--reset-registry` : Clears full usage registry.  
+- `-rl`, `--reset-learn-only` : Clears only Learn mode history.  
+- `-rc`, `--reset-challenges-only` : Clears only Challenge mode history.
 
-Reset Behavior
+## 📁 Program Structure & Logic (summary)
 
---reset-registry clears all previously used question records
+- Learn Mode: Balanced roadmap — 15 Easy, 15 Medium, 15 Hard. Avoids repeats via registry.  
+- Challenge Mode: Produces Hard questions only, split into phases (30 per phase). Ensures no overlap with Learn or past phases.  
+- Narrative Generation: Creates language variants for Python, Java, C++, and JavaScript.  
+- Registry: `data/registry/usage_registry.json` tracks used questions to prevent duplicates unless manually reset.
 
-Reset must be explicitly triggered
+## Outputs
 
-The program never resets automatically
+- Learn output: `data/output/learn_programming.json` — 45 questions (15 Easy, 15 Medium, 15 Hard).  
+- Challenge output: `data/output/challenges_phase_X.json` — 30 Hard questions per phase.  
+- Registry file: `data/registry/usage_registry.json` prevents duplicates across runs.
 
-Design Decisions
-Why a Separate Generator?
+## Tips to Shorten Workflow Further
 
-Keeps content generation independent of the main platform
+- Add dataset-specific npm scripts (e.g., `gen:learn:datasetA`) in [package.json](package.json) for one-command runs.  
+- Create an optional tiny wrapper CLI `src/cli/short.js` that maps short aliases (`l`, `c`) to full flags so you can run `npm run nc -- l datasetA r`.  
+- Use defaults in `.env` so `npm run gen:learn` is sufficient for most runs.
 
-Allows offline testing and dataset experimentation
+## Developer Notes & Optimizations
 
-Enables future AI integration without affecting production code
+- The CLI forwards extra flags after `--` to the script; use that to override defaults.  
+- For large CSVs, prefer streaming parsing (`csv-parser` stream) and JSONL outputs to reduce memory.  
+- Use an in-memory registry cache with batched writes to reduce disk I/O and speed repeated runs.  
+- Consider worker threads for CPU-bound classification/narrative generation and lazy language-variant generation to parallelize work.
 
-Why Shared Test Cases?
-
-Ensures consistent evaluation across programming languages
-
-Simplifies judge integration (e.g., Judge0)
-
-Why Registry-Based Tracking?
-
-Guarantees no duplicate questions across modes and phases
-
-Enables controlled content release
-
-Future Enhancements
-
-AI-assisted narrative refinement
-
-Smarter topic classification
-
-Difficulty re-scoring
-
-Batch-based Learn versions
-
-Integration with cloud databases (MongoDB)
-
-Direct export into CrackCode backend
+---
