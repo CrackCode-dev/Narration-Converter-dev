@@ -11,3 +11,17 @@ export function pickDeterministic(list, keyText) {
   const n = simpleHashToNumber(keyText);
   return list[n % list.length];
 }
+
+
+// {
+//   "name": "crackcode-narrative-generator",
+//   "version": "1.0.0",
+//   "type": "module",
+//   "private": true,
+//   "scripts": {
+//     "generate": "node src/cli/generate.js"
+//   },
+//   "dependencies": {
+//     "csv-parser": "^3.0.0"
+//   }
+// }
