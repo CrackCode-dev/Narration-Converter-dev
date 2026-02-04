@@ -13,7 +13,7 @@ function readField(row, colName) {
   if (v === undefined || v === null) return null;
   const s = String(v).trim();
   return s.length ? s : null;
-}
+} 
 
 function parseJsonIfPossible(value, fieldName) {
   if (value === null) return null;
@@ -29,6 +29,7 @@ function parseJsonIfPossible(value, fieldName) {
     throw new Error(`Invalid JSON in '${fieldName}': ${e.message}`);
   }
 }
+
 export function normalizeCsvRowToProblem(row, mappingConfig) {
   const cols = mappingConfig.columns;
 

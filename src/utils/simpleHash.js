@@ -6,22 +6,13 @@ export function simpleHashToNumber(text) {
   return hash;
 }
 
-export function pickDeterministic(list, keyText) {
+// Unsigned Right Shift (>>>): Fills the leftmost bits with zeros, 
+// regardless of whether the number was positive or negative.
+// and give positive to divide 
+
+export function pickDeterministic(list, keyText) {//list: array of items to choose from, keyText: string used to determine which item to pick
   if (!list.length) return "";
   const n = simpleHashToNumber(keyText);
   return list[n % list.length];
 }
 
-
-// {
-//   "name": "crackcode-narrative-generator",
-//   "version": "1.0.0",
-//   "type": "module",
-//   "private": true,
-//   "scripts": {
-//     "generate": "node src/cli/generate.js"
-//   },
-//   "dependencies": {
-//     "csv-parser": "^3.0.0"
-//   }
-// }

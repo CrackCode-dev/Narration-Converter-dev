@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Narration Converter – CrackCode Content Generator
 
 The **Narration Converter** is a Node.js–based content generation tool developed for the **CrackCode** gamified learning platform. It transforms raw programming questions from CSV datasets into structured, narrative-driven, multi-language challenges for the CrackCode ecosystem.
@@ -76,6 +77,8 @@ DEFAULT_MODE=learn
 ```
 The CLI will use these defaults when flags are omitted.
 
+=======
+>>>>>>> prototype
 ## 🏃 Execution Commands
 
 The program supports two main execution styles: Shortcuts for common tasks and Manual Flags for full control.
