@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Narration Converter – CrackCode Content Generator
 
 The **Narration Converter** is a Node.js–based content generation tool developed for the **CrackCode** gamified learning platform. It transforms raw programming questions from CSV datasets into structured, narrative-driven, multi-language challenges for the CrackCode ecosystem.
@@ -10,6 +9,7 @@ The generator operates independently as an offline content preparation tool, ens
 ## 🚀 Core Capabilities
 * **Story-driven question narration** for immersive learning.
 * **Multi-language variants** (Python, Java, C++, JavaScript) per question.
+* **AI-powered narrative refinement** using LLMs for enhanced storytelling.
 * **Bloom’s Taxonomy** tagging for educational tracking.
 * **Mode-based selection** (Learn vs. Challenge).
 * **Registry-based prevention** of duplicate content across runs.
@@ -29,6 +29,24 @@ Converts plain logic problems into engaging stories. Each programming language f
 | **JavaScript** | Modern Quest / Web-space adventure |
 
 > **Note:** The narrative only affects the flavor text; problem logic remains identical across all versions.
+
+### 🤖 AI Narrative Refinement
+The tool integrates an **AI refinement layer** powered by **Groq's LLaMA 3.3 70B** model to polish narrative titles and descriptions. This optional feature enhances storytelling while preserving technical accuracy.
+
+**Personas Supported:**
+- **Detective (Noir)** – Gritty, mysterious (Python storylines)
+- **Pirate (High Seas)** – Adventure, risk-taking (C++ storylines)
+- **Cyberpunk (Hacker)** – Dystopian, neon-lit (Java storylines)
+- **Spy (Secret Agent)** – Sleek, tactical (JavaScript storylines)
+- **Generic Mentor** – Clean, neutral, encouraging
+
+**Key Features:**
+- Difficulty-aware tone adjustment (Easy: encouraging, Medium: focused, Hard: high-stakes)
+- Preserves coding task, constraints, and technical details
+- Automatic fallback to original content if refinement fails
+- Rate-limited API calls (30 requests/min) with retry logic
+
+**Enable with:** `--ai` or `--ai-refine` flag
 
 ### 🛠️ Mode Selection
 1. **Learn Mode**: Generates a stable set of 45 questions (15 Easy, 15 Medium, 15 Hard) to build structured roadmaps.
@@ -50,35 +68,42 @@ Narration-Converter-dev/
 │   ├── classifier/     # Topic & Bloom classification
 │   ├── selector/       # Learn & Challenge selection logic
 │   ├── narrative/      # Story and template engines
+│   ├── refinement/     # AI refinement engine
 │   ├── registry/       # Registry Read/Write handlers
 │   └── utils/          # Shared utility helpers
 ├── package.json
 └── README.md
-
-⚙️ How to Run
-1. Install Dependencies
-Bash
-npm install
-<<<<<<< HEAD
 ```
+
 Key files:
 - CLI: [src/cli/generate.js](src/cli/generate.js)  
+- AI Refinement: [src/refinement/refinerEngine.js](src/refinement/refinerEngine.js)  
 - Config: [config/selection_rules.json](config/selection_rules.json)  
 - Package metadata: [package.json](package.json)  
 - Registry: [data/registry/usage_registry.json](data/registry/usage_registry.json)
 
-## Configure Defaults
+---
+
+## ⚙️ Configuration
 
 Create a `.env` file at the repository root to supply local defaults:
 ```env
 DEFAULT_DATASET=datasetA
 DEFAULT_INPUT_PATH=data/input/datasetA.csv
 DEFAULT_MODE=learn
+
+# AI Refinement (Optional)
+GROQ_API_KEY=your_groq_api_key_here
 ```
+
+**API Key Setup:**
+1. Sign up at [Groq Console](https://console.groq.com)
+2. Generate an API key
+3. Add `GROQ_API_KEY` to your `.env` file
+
 The CLI will use these defaults when flags are omitted.
 
-=======
->>>>>>> prototype
+---
 ## 🏃 Execution Commands
 
 The program supports two main execution styles: Shortcuts for common tasks and Manual Flags for full control.
@@ -98,6 +123,10 @@ Examples (using defaults from `.env` or passing dataset):
 npm run gen:learn
 npm run gen:learn:reset -- --dataset datasetA
 npm run gen:challenge -- --dataset datasetA --phase 1
+
+# With AI refinement enabled
+npm run gen:learn -- --ai
+npm run gen:challenge -- --dataset datasetA --phase 1 --ai-refine
 ```
 
 ### 2. Manual Commands (with Flags)
@@ -115,6 +144,11 @@ npm run generate -- --mode learn --reset-registry
 ```bash
 npm run generate -- --mode challenge --phase 2 --dataset datasetA
 ```
+- Generate with AI refinement:
+```bash
+npm run generate -- --mode learn --ai
+npm run generate -- --mode challenge --phase 1 --ai-refine
+```
 
 ## 🚩 Command Flag Reference
 
@@ -122,6 +156,7 @@ npm run generate -- --mode challenge --phase 2 --dataset datasetA
 - `-i`, `--input` : Path to the CSV file (inferred from dataset if omitted).  
 - `-m`, `--mode` : `learn` or `challenge`.  
 - `-p`, `--phase` : Challenge phase number (default `1`).  
+- `--ai`, `--ai-refine` : Enable AI narrative refinement (requires `GROQ_API_KEY`).  
 - `-R`, `--reset-registry` : Clears full usage registry.  
 - `-rl`, `--reset-learn-only` : Clears only Learn mode history.  
 - `-rc`, `--reset-challenges-only` : Clears only Challenge mode history.
@@ -148,49 +183,16 @@ npm run generate -- --mode challenge --phase 2 --dataset datasetA
 ## Developer Notes & Optimizations
 
 - The CLI forwards extra flags after `--` to the script; use that to override defaults.  
+- **AI Rate Limiting:** The refiner enforces 1 request per 2 seconds (30 RPM max) to respect Groq API limits.  
 - For large CSVs, prefer streaming parsing (`csv-parser` stream) and JSONL outputs to reduce memory.  
 - Use an in-memory registry cache with batched writes to reduce disk I/O and speed repeated runs.  
 - Consider worker threads for CPU-bound classification/narrative generation and lazy language-variant generation to parallelize work.
 
 ---
-=======
-2. Generate Content
-Fresh start for Learn Mode (Resets history):
 
-Bash
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode learn --reset-registry
-Generate next Challenge Phase:
+## 🗺️ Future Enhancements
 
-Bash
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode challenge --phase 2
-🗺️ Future Enhancements
-🤖 AI Refinement: Using LLMs to polish the narrative flow.
-
-📊 Difficulty Re-scoring: Dynamic difficulty adjustment based on complexity analysis.
-
-☁️ Cloud Integration: Direct export to MongoDB for seamless platform updates.
-
-
-
-Markdown
-## ⚙️ How to Run
-
-### 1. Install Dependencies
-```bash
-npm install
-2. Generate Content
-Fresh start for Learn Mode (Resets history):
-
-Bash
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode learn --reset-registry
-Generate next Challenge Phase:
-
-Bash
-npm run generate -- --dataset datasetA --input data/input/datasetA.csv --mode challenge --phase 2
-🗺️ Future Enhancements
-🤖 AI Refinement: Using LLMs to polish the narrative flow.
-
-📊 Difficulty Re-scoring: Dynamic difficulty adjustment based on complexity analysis.
-
-☁️ Cloud Integration: Direct export to MongoDB for seamless platform updates
->>>>>>> b309be56d0b313f53addd9d45f9c8c535aa63f84
+📊 **Difficulty Re-scoring:** Dynamic difficulty adjustment based on complexity analysis.  
+☁️ **Cloud Integration:** Direct export to MongoDB for seamless platform updates.  
+🎯 **Custom Persona Editor:** UI-based tool to create and manage custom narrative personas.  
+🔍 **Analytics Dashboard:** Track question usage, difficulty distribution, and engagement metrics.
