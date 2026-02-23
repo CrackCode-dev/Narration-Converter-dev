@@ -10,6 +10,7 @@ The generator operates independently as an offline content preparation tool, ens
 ## 🚀 Core Capabilities
 * **Story-driven question narration** for immersive learning.
 * **Multi-language variants** (Python, Java, C++, JavaScript) per question.
+* **AI Narrative Refinement** via GROQ API (optional, flag-controlled)
 * **Bloom’s Taxonomy** tagging for educational tracking.
 * **Mode-based selection** (Learn vs. Challenge).
 * **Registry-based prevention** of duplicate content across runs.
@@ -34,6 +35,30 @@ Converts plain logic problems into engaging stories. Each programming language f
 1. **Learn Mode**: Generates a stable set of 45 questions (15 Easy, 15 Medium, 15 Hard) to build structured roadmaps.
 2. **Challenge Mode**: Focuses on advanced practice with **Hard** questions only, released in phased batches (e.g., 30 per phase).
 
+---
+
+### 🤖 AI Refinement Layer (Optional)
+
+When the `--ai` flag is passed, each generated variant is sent through the **Groq API** (`llama-3.3-70b-versatile`) for persona-aware narrative polishing. The AI rewrites the title and description to more deeply reflect the assigned persona, difficulty tone, and topic — without touching the underlying coding problem.
+
+**Persona instructions passed to the model:**
+
+| Persona | AI Instruction Style |
+| :--- | :--- |
+| **Detective** | Noir, gritty, mysterious - uses terms like *clue*, *suspect*, *lead*, *case* |
+| **Pirate** | Adventurous, risky - uses terms like *captain*, *loot*, *horizon*, *plank* |
+| **Cyberpunk Hacker** | Dystopian, neon-lit - uses terms like *mainframe*, *glitch*, *cyberware*, *corpo* |
+| **Spy / Secret Agent** | Sleek, tactical - uses terms like *intel*, *mission*, *asset*, *classified*, *agency* |
+
+**Difficulty tone applied by the AI:**
+- **Easy** - Encouraging and calm
+- **Medium** - Focused and professional
+- **Hard** - Serious and high-stakes
+
+**Rate limiting:** The Groq free tier allows 30 requests per minute. The engine enforces a 2-second delay between requests with a concurrency limit of 1 to stay within quota. For a full challenge phase (120 variants), expect approximately **4 minutes** of processing time with AI on.
+
+If the AI call fails or returns invalid JSON, the engine automatically falls back to the base deterministic narrative - no output is lost.
+   
 ---
 
 ## 📂 Project Structure
