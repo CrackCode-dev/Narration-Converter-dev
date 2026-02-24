@@ -2,7 +2,7 @@ import fs from "fs";
 
 export function loadUsageRegistry(filePath) {
   if (!fs.existsSync(filePath)) {
-    return { learnUsedProblemIds: [], challengeUsedHardProblemIds: [], phasesCompleted: 0 };
+    return { learnUsedProblemIds: [], challengeUsedProblemIds: [], phasesCompleted: 0 };
   }
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -16,7 +16,7 @@ export function getLearnUsedSet(registry) {
 }
 
 export function getChallengeUsedSet(registry) {
-  return new Set(registry.challengeUsedHardProblemIds || []);
+  return new Set(registry.challengeUsedProblemIds || []);
 }
 
 export function addLearnUsed(registry, problemIds) {
@@ -25,10 +25,10 @@ export function addLearnUsed(registry, problemIds) {
   registry.learnUsedProblemIds = Array.from(s);
 }
 
-export function addChallengeUsedHard(registry, problemIds, phase) {
-  const s = new Set(registry.challengeUsedHardProblemIds || []);
+export function addChallengeUsed(registry, problemIds, phase) {
+  const s = new Set(registry.challengeUsedProblemIds || []);
   for (const id of problemIds) s.add(id);
-  registry.challengeUsedHardProblemIds = Array.from(s);
+  registry.challengeUsedProblemIds = Array.from(s);
   registry.phasesCompleted = Math.max(registry.phasesCompleted || 0, phase);
 }
 /**

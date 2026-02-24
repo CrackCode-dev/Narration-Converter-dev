@@ -23,15 +23,16 @@ import {
   loadUsageRegistry,
   saveUsageRegistry,
   getLearnUsedSet,
-  getChallengeUsedHardSet,
+  getChallengeUsedSet,
   addLearnUsed,
-  addChallengeUsedHard,
+  addChallengeUsed,
   resetRegistryAll,
   resetRegistryLearnOnly,
   resetRegistryChallengesOnly
 } from "../registry/usageRegistry.js";
 
 import { validateOutputRecord } from "../validator/outputValidator.js";
+import { diff } from 'util';
 
 
 function getSetting(short, long, envKey, fallback = null) {
@@ -74,6 +75,9 @@ async function main() {
   const dataset = getSetting("d", "dataset", "DEFAULT_DATASET", "datasetA");
   const mode = getSetting("m", "mode", "DEFAULT_MODE"); 
   const phase = toNumberOrFallback(getSetting("p", "phase", null, "1"), 1);
+
+  const diffculty = getSetting("diff", "difficulty", null, "Medium");
+  const count = toNumberOrFallback(getSetting("c", "count", null, "5"), 5);
   
   // Check for AI flags
   const useAi = process.argv.includes("--ai") || process.argv.includes("--ai-refine");
@@ -98,6 +102,8 @@ async function main() {
       "  -d, --dataset <name>\n" +
       "  -i, --input <path>\n" +
       "  -p, --phase <N>\n" +
+      " --difficulty <Easy|Medium|Hard> (Learn: isolate by diffulty)\n" +
+      " --c, --count <N>                (Learn: override question count)\n" +
       "  --ai, --ai-refine       (Enable AI Refinement)\n" +
       "Reset Flags:\n" +
       "  -R,  --reset-registry\n" +
@@ -178,7 +184,7 @@ async function main() {
   }
 
   const learnUsedSet = getLearnUsedSet(registry);
-  const challengeUsedSet = getChallengeUsedHardSet(registry);
+  const challengeUsedSet = getChallengeUsedSet(registry);
 
   const languages = rules.languages;
   const languageToStory = stories.languageToStory;
@@ -193,9 +199,34 @@ async function main() {
   if (mode === "learn") {
   const availableForLearn = enrichedProblems.filter(p => !learnUsedSet.has(p.problemId));
 
+  let countsPerDifficulty;
+
+  if (diffculty) {
+    const normalizedDifficulty = diffculty.charAt(0).toUpperCase() + diffculty.slice(1).toLowerCase();
+    const validDifficulties = ["Easy", "Medium", "Hard"];
+
+    if (!validDifficulties.includes(normalizedDifficulty)) {
+      throw new Error(`Invalid --difficulty value '${diffculty}'. Must be Easy, Medium, or Hard.`);
+    }
+
+    const resolvedCount = count ?? rules.learn.countsPerDifficulty[normalizedDifficulty];
+
+    if (!resolvedCount) {
+      throw new Error(
+        `No count found for difficulty '${normalizedDifficulty}'. ` +
+        `Either pass --count or ensure it exists in selection_rules.json.`
+      );
+    }
+
+    countsPerDifficulty = { [normalizedDifficulty]: resolvedCount };
+    log.info(`[Learn Mode] Isolated batch — Difficulty: ${normalizedDifficulty}, Count: ${resolvedCount}`);
+  } else {
+    countsPerDifficulty = rules.learn.countsPerDifficulty;
+  }
+
   const { selected, meta } = pickLearnProblems({
     allProblems: availableForLearn,
-    countsPerDifficulty: rules.learn.countsPerDifficulty
+    countsPerDifficulty
   });
 
   addLearnUsed(registry, selected.map(p => p.problemId));
@@ -261,7 +292,9 @@ async function main() {
     outputItems.push(record);
   }
 
-  const outPath = path.join("data", "output", "learn_programming.json");
+  const difficultyTag = diffculty ? `_${diffculty.toLowerCase()}`: "";
+  const outPath = path.join("data", "output", `learn_programming${difficultyTag}.json`);
+
   writeJson(outPath, {
     meta: { 
       dataset, 
