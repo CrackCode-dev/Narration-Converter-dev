@@ -280,10 +280,10 @@ async function main() {
 
 // CHALLENGE MODE
 if (mode === "challenge") {
-  const hardProblems = enrichedProblems.filter(p => p.difficulty === "Hard");
+  const challengeEligibleProblems = enrichedProblems.filter(p => p.difficulty === "Hard" || p.difficulty === "Medium");
 
   const { selected, meta } = pickChallengeHardPhase({
-    hardProblems,
+    eligbibleProblems: challengeEligibleProblems,
     learnUsedSet,
     challengeUsedSet,
     phaseSize: rules.challenge.phaseSize

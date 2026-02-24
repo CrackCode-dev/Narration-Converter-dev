@@ -15,7 +15,7 @@ export function getLearnUsedSet(registry) {
   return new Set(registry.learnUsedProblemIds || []);
 }
 
-export function getChallengeUsedHardSet(registry) {
+export function getChallengeUsedSet(registry) {
   return new Set(registry.challengeUsedHardProblemIds || []);
 }
 
