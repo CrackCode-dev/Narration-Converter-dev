@@ -9,7 +9,7 @@ const PERSONA_MAP = {
     "heist_v1": 
         "Digital Heist Crew Member (Slick, Confident, Streetwise, always three steps ahead, treats every problem as a job to be pulled off cleanly, uses terms like 'mark', 'score', 'target', 'getaway', 'vault', 'inside job', 'crew')",
     "sentinel_v1": 
-        "White Hat Security Hacker (Solitary, precise, duty-bond defender of digital systems, uses terms like 'breach', 'vulnerability', 'trace', 'patch', 'lockdown', 'threat vector', 'incident response', 'clearance')",
+        "White Hat Security Hacker (Solitary, precise, duty-bound defender of digital systems, uses terms like 'breach', 'vulnerability', 'trace', 'patch', 'lockdown', 'threat vector', 'incident response', 'clearance')",
     "spy_v1": 
         "Covert Secret Agent (Sleek, Cool under pressure, tactical, uses terms like 'intel', 'mission', 'asset', 'classified', 'agency', 'extraction', 'cover')",
     "generic_v1": 

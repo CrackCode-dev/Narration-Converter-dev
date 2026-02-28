@@ -81,7 +81,7 @@ async function main() {
   const clearOutputs = getSetting("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
   
   // Check for AI flags
-  const useAi = process.argv.includes("-ai") || process.argv.includes("--ai-refine");
+  const useAi = process.argv.includes("-ai") || process.argv.includes("--ai") || process.argv.includes("--ai-refine");
   const skipAi = !useAi; // For clarity in passing to functions
 
   // Limit concurrency to 1 to strictly control the rate.
@@ -112,7 +112,7 @@ async function main() {
       "  -rl, --reset-learn-only\n" +
       "  -rc, --reset-challenges-only\n" + 
       "Output Flags:\n" + 
-      "  -clr, --clear-outputs <type>   Types: all, learn, learn:easy, learn:medium, learn:hard, learn:hard:python, learn:hard:java, learn:hard:cpp, learn:hard:javascript, challenge, chaallenge:<N>"
+      "  -clr, --clear-outputs <type>   Types: all, learn, learn:easy, learn:medium, learn:hard, learn:hard:python, learn:hard:java, learn:hard:cpp, learn:hard:javascript, challenge, challenge:phase<N>"
     );
     process.exit(1);
   }

@@ -36,7 +36,7 @@ export function addChallengeUsed(registry, problemIds, phase) {
  */
 export function resetRegistryAll(registry) {
   registry.learnUsedProblemIds = [];
-  registry.challengeUsedHardProblemIds = [];
+  registry.challengeUsedProblemIds = [];
   registry.phasesCompleted = 0;
   return registry;
 }
@@ -47,7 +47,7 @@ export function resetRegistryLearnOnly(registry) {
 }
 
 export function resetRegistryChallengesOnly(registry) {
-  registry.challengeUsedHardProblemIds = [];
+  registry.challengeUsedProblemIds = [];
   registry.phasesCompleted = 0;
   return registry;
 }

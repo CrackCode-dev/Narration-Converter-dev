@@ -18,14 +18,14 @@
  *
  * @returns {Object} { selected, meta }
  */
-export function pickChallengeHardPhase({
-  eligbibleProblems,
+export function pickChallengePhase({
+  eligibibleProblems,
   learnUsedSet,
   challengeUsedSet,
   phaseSize
 }) {
   // 1) Remove anything already used in Learn (no overlap rule)
-  const notInLearn = eligbibleProblems.filter((p) => !learnUsedSet.has(p.problemId));
+  const notInLearn = eligibibleProblems.filter((p) => !learnUsedSet.has(p.problemId));
 
   // If Learn already consumed all hard questions, challenges cannot be built (for this dataset)
   if (notInLearn.length === 0) {
@@ -60,7 +60,7 @@ export function pickChallengeHardPhase({
 
     repeatedPick = alreadyUsedInChallenges.slice(0, shortage);
 
-    if (unusedHard.length === 0) {
+    if (unused.length === 0) {
       notice =
         "All available questions (excluding Learn) have been used in previous Challenge phases. " +
         "Repeated questions are being displayed.";
