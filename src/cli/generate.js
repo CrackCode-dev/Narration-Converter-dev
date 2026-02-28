@@ -32,6 +32,7 @@ import {
 } from "../registry/usageRegistry.js";
 
 import { validateOutputRecord } from "../validator/outputValidator.js";
+import { Files } from 'groq-sdk/resources.mjs';
 
 function getSetting(short, long, envKey, fallback = null) {
   const longIdx = process.argv.indexOf(`--${long}`);
@@ -77,6 +78,8 @@ async function main() {
   const difficulty = getSetting("diff", "difficulty", null, null);  //isolate each batch based on difficulty level (Only for Learn mode)
   const count = toNumberOrFallback(getSetting("c", "count", null, null), null); //override number of questions to select for the isolated batch (Only for Learn mode)
   const language = getSetting("lang", "language", null, null);  //override language selection (e.g. only generate variants for Python) - currently only supported in Learn mode
+
+  const clearOutputs = hasFlag("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
   
   // Check for AI flags
   const useAi = process.argv.includes("-ai") || process.argv.includes("--ai-refine");
@@ -108,7 +111,9 @@ async function main() {
       "Reset Flags:\n" +
       "  -R,  --reset-registry\n" +
       "  -rl, --reset-learn-only\n" +
-      "  -rc, --reset-challenges-only"
+      "  -rc, --reset-challenges-only\n" + 
+      "Output Flags:\n" + 
+      "  -clr, --clear-outputs <type>   Types: all, learn, learn:easy, learn:medium, learn:hard, learn:hard:python, learn:hard:java, learn:hard:cpp, learn:hard:javascript, challenge, chaallenge:<N>"
     );
     process.exit(1);
   }
@@ -184,6 +189,46 @@ async function main() {
       log.warn("Registry reset: CHALLENGES cleared.");
       process.exit(0); // Exit after full reset to avoid accidental generation
     }
+  }
+
+  if (clearOutputs) {
+    const outputDir = path.join("data", "output");  
+
+    const prefixMap = {
+      "learn": f => f.startsWith("learn_programming"),
+      "learn:easy": f => f.startsWith("learn_programming_easy"),
+      "learn:medium": f => f.startsWith("learn_programming_medium"),
+      "learn:hard": f => f.startsWith("learn_programming_hard"),
+      "learn:hard:python": f => f.startsWith("learn_programming_hard") && f.includes("_python"),
+      "learn:hard:java": f => f.startsWith("learn_programming_hard") && f.includes("_java"),
+      "learn:hard:cpp": f => f.startsWith("learn_programming_hard") && f.includes("_cpp"),
+      "learn:hard:javascript": f => f.startsWith("learn_programming_hard") && f.includes("_javascript"),
+      "all": f => f.startsWith("learn_programming") || f.startsWith("challenges_phase_")
+    };
+
+    const challengePhaseMatch = clearOutputs.match(/^challenge:phase(\d+)$/);
+    if (challengePhaseMatch) {
+      const phase = challengePhaseMatch[1];
+      prefixMap[clearOutputs] = f => f.startsWith(`challenges_phase_${phase}`);
+    }
+
+    const matcher = prefixMap[clearOutputs.toLowerCase()];
+    if (!matcher) {
+      throw new Error(`Invalid clear-outputs value '${clearOutputs}'. Valid options: ${Object.keys(prefixMap).join(", ")}`);
+    }
+
+    const matched = Files.filter(matcher);
+
+    if (matched.length === 0) {
+      log.info(`No output files found matching '${clearOutputs}'.`);
+    } else {
+      for(const file of matched) {
+        fs.unlinkSync(path.join(outputDir, file));
+        log.info(`Cleared: ${file}`);
+      }
+      log.warn(`Cleared ${matched.length} output file(s).`);
+    }
+    process.exit(0); // Exit after clearing outputs to avoid accidental generation
   }
 
   const learnUsedSet = getLearnUsedSet(registry);

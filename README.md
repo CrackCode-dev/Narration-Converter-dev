@@ -23,10 +23,10 @@ Converts plain logic problems into engaging stories. Each programming language f
 
 | Language | Narrative Theme |
 | :--- | :--- |
-| **Python** | Detective / Noir storyline |
-| **Java** | Cyber-security / Enterprise storyline |
-| **C++** | Pirate / High-seas adventure |
-| **JavaScript** | Modern Quest / Web-space adventure |
+| **Python** | Noir Detective storyline |
+| **Java** | Digital Heist / Crew adventure |
+| **C++** | White Hat Security / Hacker sentinel |
+| **JavaScript** | Covert Secret Agent / Spy thriller |
 
 > **Note:** The narrative only affects the flavor text; problem logic remains identical across all versions.
 
@@ -34,11 +34,11 @@ Converts plain logic problems into engaging stories. Each programming language f
 The tool integrates an **AI refinement layer** powered by **Groq's LLaMA 3.3 70B** model to polish narrative titles and descriptions. This optional feature enhances storytelling while preserving technical accuracy.
 
 **Personas Supported:**
-- **Detective (Noir)** – Gritty, mysterious (Python storylines)
-- **Pirate (High Seas)** – Adventure, risk-taking (C++ storylines)
-- **Cyberpunk (Hacker)** – Dystopian, neon-lit (Java storylines)
-- **Spy (Secret Agent)** – Sleek, tactical (JavaScript storylines)
-- **Generic Mentor** – Clean, neutral, encouraging
+- **Noir Detective** – Gritty, mysterious, world-weary (Python storylines)
+- **Digital Heist Crew** – Slick, confident, streetwise (Java storylines)
+- **White Hat Security Hacker** – Solitary, precise, duty-bound (C++ storylines)
+- **Covert Secret Agent** – Sleek, cool under pressure, tactical (JavaScript storylines)
+- **Helpful Mentor** – Clean, neutral, encouraging (fallback persona)
 
 **Key Features:**
 - Difficulty-aware tone adjustment (Easy: encouraging, Medium: focused, Hard: high-stakes)
@@ -46,11 +46,11 @@ The tool integrates an **AI refinement layer** powered by **Groq's LLaMA 3.3 70B
 - Automatic fallback to original content if refinement fails
 - Rate-limited API calls (30 requests/min) with retry logic
 
-**Enable with:** `--ai` or `--ai-refine` flag
+**Enable with:** `-ai` or `--ai-refine` flag
 
 ### 🛠️ Mode Selection
-1. **Learn Mode**: Generates a stable set of 45 questions (15 Easy, 15 Medium, 15 Hard) to build structured roadmaps.
-2. **Challenge Mode**: Focuses on advanced practice with **Hard** questions only, released in phased batches (e.g., 30 per phase).
+1. **Learn Mode**: Generates a stable set of 45 questions (15 Easy, 15 Medium, 15 Hard) to build structured roadmaps. Supports filtering by difficulty level and language variants.
+2. **Challenge Mode**: Releases advanced practice questions in phased batches (e.g., 30 per phase). Supports multiple difficulty levels (Medium and Hard), ensuring no overlap with Learn mode questions.
 
 ---
 
@@ -152,35 +152,74 @@ npm run generate -- --mode challenge --phase 1 --ai-refine
 
 ## 🚩 Command Flag Reference
 
-- `-d`, `--dataset` : The dataset name (e.g., `datasetA`, `leetcode`).  
-- `-i`, `--input` : Path to the CSV file (inferred from dataset if omitted).  
-- `-m`, `--mode` : `learn` or `challenge`.  
-- `-p`, `--phase` : Challenge phase number (default `1`).  
-- `--ai`, `--ai-refine` : Enable AI narrative refinement (requires `GROQ_API_KEY`).  
-- `-R`, `--reset-registry` : Clears full usage registry.  
-- `-rl`, `--reset-learn-only` : Clears only Learn mode history.  
+**Core Flags:**
+- `-d`, `--dataset` : The dataset name (e.g., `datasetA`, `leetcode`).
+- `-i`, `--input` : Path to the CSV file (inferred from dataset if omitted).
+- `-m`, `--mode` : `learn` or `challenge`.
+- `-p`, `--phase` : Challenge phase number (default `1`).
+
+**Learn Mode Options:**
+- `-diff`, `--difficulty` : Filter by difficulty level (`Easy`, `Medium`, or `Hard`) for Learn mode only.
+- `-c`, `--count` : Override the number of questions to select (Learn mode only).
+- `-lang`, `--language` : Override language selection to generate variants for a specific language only (currently supported in Learn mode).
+
+**AI Refinement:**
+- `-ai`, `--ai-refine` : Enable AI narrative refinement (requires `GROQ_API_KEY`).
+
+**Registry Management:**
+- `-R`, `--reset-registry` : Clears full usage registry.
+- `-rl`, `--reset-learn-only` : Clears only Learn mode history.
 - `-rc`, `--reset-challenges-only` : Clears only Challenge mode history.
+
+**Output Management:**
+- `-clr`, `--clear-outputs <type>` : Clear previously generated output files.
+  - Valid types: `all`, `learn`, `learn:easy`, `learn:medium`, `learn:hard`, `learn:hard:python`, `learn:hard:java`, `learn:hard:cpp`, `learn:hard:javascript`, `challenge:phase<N>`
+
+**Examples:**
+```bash
+# Clear all Learn outputs
+npm run generate -- -m learn -clr learn
+
+# Clear only Learn Easy outputs
+npm run generate -- -m learn -clr learn:easy
+
+# Clear Challenge Phase 1 outputs
+npm run generate -- -m challenge -clr challenge:phase1
+
+# Clear all outputs
+npm run generate -- -m learn -clr all
+```
+
+---
 
 ## 📁 Program Structure & Logic (summary)
 
-- Learn Mode: Balanced roadmap — 15 Easy, 15 Medium, 15 Hard. Avoids repeats via registry.  
-- Challenge Mode: Produces Hard questions only, split into phases (30 per phase). Ensures no overlap with Learn or past phases.  
-- Narrative Generation: Creates language variants for Python, Java, C++, and JavaScript.  
-- Registry: `data/registry/usage_registry.json` tracks used questions to prevent duplicates unless manually reset.
+- **Learn Mode**: Balanced roadmap — 15 Easy, 15 Medium, 15 Hard (or filtered by difficulty). Supports single-language variant generation. Avoids repeats via registry.
+- **Challenge Mode**: Produces Medium and Hard questions, split into phases (30 per phase). Ensures no overlap with Learn-used questions or previous challenge phases.
+- **Narrative Generation**: Creates language variants for Python, Java, C++, and JavaScript with story-specific personas.
+- **AI Refinement**: Optionally refines narrative titles and descriptions using LLM with rate limiting (max 30 requests/minute).
+- **Registry**: `data/registry/usage_registry.json` tracks used questions to prevent duplicates unless manually reset.
+
+---
 
 ## Outputs
 
-- Learn output: `data/output/learn_programming.json` — 45 questions (15 Easy, 15 Medium, 15 Hard).  
-- Challenge output: `data/output/challenges_phase_X.json` — 30 Hard questions per phase.  
-- Registry file: `data/registry/usage_registry.json` prevents duplicates across runs.
+- **Learn output**: `data/output/learn_programming.json` — 45 questions (15 Easy, 15 Medium, 15 Hard) with all language variants.
+- **Filtered Learn outputs**: When using `--difficulty` filter, outputs like `data/output/learn_programming_easy.json`, `learn_programming_medium.json`, etc.
+- **Language-specific outputs**: When using `--language` filter, outputs like `data/output/learn_programming_hard_python.json`, etc.
+- **Challenge output**: `data/output/challenges_phase_X.json` — 30 questions (Medium and Hard mix) per phase with all language variants.
+- **Registry file**: `data/registry/usage_registry.json` prevents duplicates across runs and tracks Learn vs. Challenge usage separately.
+
+---
 
 ## Tips to Shorten Workflow Further
 
 - Add dataset-specific npm scripts (e.g., `gen:learn:datasetA`) in [package.json](package.json) for one-command runs.  
 - Create an optional tiny wrapper CLI `src/cli/short.js` that maps short aliases (`l`, `c`) to full flags so you can run `npm run nc -- l datasetA r`.  
 - Use defaults in `.env` so `npm run gen:learn` is sufficient for most runs.
+- Use the `-clr` flag to quickly clean up outputs before generating fresh batches.
 
-## Developer Notes & Optimizations
+---
 
 - The CLI forwards extra flags after `--` to the script; use that to override defaults.  
 - **AI Rate Limiting:** The refiner enforces 1 request per 2 seconds (30 RPM max) to respect Groq API limits.  
