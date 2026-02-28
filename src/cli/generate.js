@@ -32,8 +32,6 @@ import {
 } from "../registry/usageRegistry.js";
 
 import { validateOutputRecord } from "../validator/outputValidator.js";
-import { diff } from 'util';
-
 
 function getSetting(short, long, envKey, fallback = null) {
   const longIdx = process.argv.indexOf(`--${long}`);
@@ -76,11 +74,13 @@ async function main() {
   const mode = getSetting("m", "mode", "DEFAULT_MODE"); 
   const phase = toNumberOrFallback(getSetting("p", "phase", null, "1"), 1);
 
-  const diffculty = getSetting("diff", "difficulty", null, "Medium");
-  const count = toNumberOrFallback(getSetting("c", "count", null, "5"), 5);
+  const difficulty = getSetting("diff", "difficulty", null, null);  //isolate each batch based on difficulty level (Only for Learn mode)
+  const count = toNumberOrFallback(getSetting("c", "count", null, null), null); //override number of questions to select for the isolated batch (Only for Learn mode)
+  const language = getSetting("lang", "language", null, null);  //override language selection (e.g. only generate variants for Python) - currently only supported in Learn mode
   
   // Check for AI flags
-  const useAi = process.argv.includes("--ai") || process.argv.includes("--ai-refine");
+  const useAi = process.argv.includes("-ai") || process.argv.includes("--ai-refine");
+  const skipAi = !useAi; // For clarity in passing to functions
 
   // Limit concurrency to 1 to strictly control the rate.
   const limit = pLimit(1); 
@@ -102,9 +102,9 @@ async function main() {
       "  -d, --dataset <name>\n" +
       "  -i, --input <path>\n" +
       "  -p, --phase <N>\n" +
-      " --difficulty <Easy|Medium|Hard> (Learn: isolate by diffulty)\n" +
-      " --c, --count <N>                (Learn: override question count)\n" +
-      "  --ai, --ai-refine       (Enable AI Refinement)\n" +
+      " -diff, --difficulty <Easy|Medium|Hard> (Learn: isolate by difficulty)\n" +
+      " -c, --count <N>                (Learn: override question count)\n" +
+      "  -ai, --ai-refine       (Enable AI Refinement)\n" +
       "Reset Flags:\n" +
       "  -R,  --reset-registry\n" +
       "  -rl, --reset-learn-only\n" +
@@ -170,21 +170,38 @@ async function main() {
     resetRegistryAll(registry);
     saveUsageRegistry(registryPath, registry);
     log.warn("Registry reset: ALL cleared.");
+    process.exit(0); // Exit after full reset to avoid accidental generation
   } else {
     if (resetLearnOnly) {
       resetRegistryLearnOnly(registry);
       saveUsageRegistry(registryPath, registry);
       log.warn("Registry reset: LEARN cleared.");
+      process.exit(0); // Exit after full reset to avoid accidental generation
     }
     if (resetChallengesOnly) {
       resetRegistryChallengesOnly(registry);
       saveUsageRegistry(registryPath, registry);
       log.warn("Registry reset: CHALLENGES cleared.");
+      process.exit(0); // Exit after full reset to avoid accidental generation
     }
   }
 
   const learnUsedSet = getLearnUsedSet(registry);
   const challengeUsedSet = getChallengeUsedSet(registry);
+
+  const validLanguages = rules.languages;
+
+  let activeLanguages;
+  if (language) {
+    const normalizedLanguage = language.toLowerCase();
+    if (!validLanguages.includes(normalizedLanguage)) {
+      throw new Error(`Invalid language '${language}'. Valid options: ${validLanguages.join(", ")}`);
+    }
+    activeLanguages = [normalizedLanguage];
+    log.info(`Language override active. Only generating variants for: ${normalizedLanguage}`);
+  } else {
+    activeLanguages = validLanguages;
+  }
 
   const languages = rules.languages;
   const languageToStory = stories.languageToStory;
@@ -201,12 +218,12 @@ async function main() {
 
   let countsPerDifficulty;
 
-  if (diffculty) {
-    const normalizedDifficulty = diffculty.charAt(0).toUpperCase() + diffculty.slice(1).toLowerCase();
+  if (difficulty) {
+    const normalizedDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
     const validDifficulties = ["Easy", "Medium", "Hard"];
 
     if (!validDifficulties.includes(normalizedDifficulty)) {
-      throw new Error(`Invalid --difficulty value '${diffculty}'. Must be Easy, Medium, or Hard.`);
+      throw new Error(`Invalid --difficulty value '${difficulty}'. Must be Easy, Medium, or Hard.`);
     }
 
     const resolvedCount = count ?? rules.learn.countsPerDifficulty[normalizedDifficulty];
@@ -232,7 +249,7 @@ async function main() {
   addLearnUsed(registry, selected.map(p => p.problemId));
   saveUsageRegistry(registryPath, registry);
 
-  log.info(`[Learn Mode] Selected ${selected.length} problems. Starting AI Refinement...`);
+  log.info(`[Learn Mode] Selected ${selected.length} problems. ${useAi ? "Starting AI Refinement..." : "Starting Manual Conversion..."}`);
 
   const outputItems = [];
   let processedVariants = 0;
@@ -240,12 +257,13 @@ async function main() {
   for (const p of selected) {
     const variants = makeLanguageVariants({
       problemId: p.problemId,
-      languages,
+      languages: activeLanguages,
       languageToStory,
       defaultStory,
       mode: "learn",
       topic: p.topic,
-      original: p.original
+      original: p.original,
+      skipAi
     });
 
     // Refine variants sequentially with proper rate limiting
@@ -261,7 +279,7 @@ async function main() {
         difficulty: p.difficulty,
         topic: p.topic,
         bloom: p.bloom,
-        skipAi: !useAi
+        skipAi
       });
       
       refinedVariants.push({ ...v, narrative: refined });
@@ -292,8 +310,9 @@ async function main() {
     outputItems.push(record);
   }
 
-  const difficultyTag = diffculty ? `_${diffculty.toLowerCase()}`: "";
-  const outPath = path.join("data", "output", `learn_programming${difficultyTag}.json`);
+  const difficultyTag = difficulty ? `_${difficulty.toLowerCase()}`: "";
+  const languageTag = language ? `_${language.toLowerCase()}` : "";
+  const outPath = path.join("data", "output", `learn_programming${difficultyTag}${languageTag}.json`);
 
   writeJson(outPath, {
     meta: { 
@@ -316,7 +335,7 @@ if (mode === "challenge") {
   const challengeEligibleProblems = enrichedProblems.filter(p => p.difficulty === "Hard" || p.difficulty === "Medium");
 
   const { selected, meta } = pickChallengeHardPhase({
-    eligbibleProblems: challengeEligibleProblems,
+    eligibleProblems: challengeEligibleProblems,
     learnUsedSet,
     challengeUsedSet,
     phaseSize: rules.challenge.phaseSize
@@ -326,10 +345,10 @@ if (mode === "challenge") {
     .filter(p => !challengeUsedSet.has(p.problemId) && !learnUsedSet.has(p.problemId))
     .map(p => p.problemId);
 
-  addChallengeUsedHard(registry, newUniqueIds, phase);
+  addChallengeUsed(registry, newUniqueIds, phase);
   saveUsageRegistry(registryPath, registry);
 
-  log.info(`[Challenge Mode] Selected ${selected.length} problems. Starting AI Refinement...`);
+  log.info(`[Challenge Mode] Selected ${selected.length} problems. ${useAi ? "Starting AI Refinement..." : "Starting Manual Conversion..."}`);
 
   const outputItems = [];
   let processedVariants = 0;
@@ -337,12 +356,13 @@ if (mode === "challenge") {
   for (const p of selected) {
     const variants = makeLanguageVariants({
       problemId: p.problemId,
-      languages,
+      languages: activeLanguages,
       languageToStory,
       defaultStory,
       mode: "challenge",
       topic: p.topic,
-      original: p.original
+      original: p.original,
+      skipAi
     });
 
     // Refine variants sequentially with proper rate limiting
@@ -358,7 +378,7 @@ if (mode === "challenge") {
         difficulty: p.difficulty,
         topic: p.topic,
         bloom: p.bloom,
-        skipAi: !useAi
+        skipAi
       });
       
       refinedVariants.push({ ...v, narrative: refined });
@@ -389,7 +409,8 @@ if (mode === "challenge") {
     outputItems.push(record);
   }
 
-  const outPath = path.join("data", "output", `challenges_phase_${phase}.json`);
+  const languageTag = language ? `_${language.toLowerCase()}` : "";
+  const outPath = path.join("data", "output", `challenges_phase_${phase}${languageTag}.json`);
   writeJson(outPath, {
     meta: { 
       dataset, 

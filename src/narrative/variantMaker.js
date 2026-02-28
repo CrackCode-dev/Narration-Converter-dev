@@ -2,7 +2,7 @@ import { makeVariantId } from "../utils/idMaker.js";
 import { getStarterCode } from "./starterCode.js";
 import { buildNarrative } from "./narrativeBuilder.js"
  
-export function makeLanguageVariants({ problemId, languages, languageToStory, defaultStory, mode, topic, original }) {
+export function makeLanguageVariants({ problemId, languages, languageToStory, defaultStory, mode, topic, original, skipAi }) {
   const variants = [];
 
   for (const language of languages) {
@@ -15,7 +15,8 @@ export function makeLanguageVariants({ problemId, languages, languageToStory, de
       problemId,
       originalTitle: original.title,
       originalDescription: original.description,
-      language
+      language,
+      skipAi
     });
 
     variants.push({

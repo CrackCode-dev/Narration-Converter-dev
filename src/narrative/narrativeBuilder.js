@@ -187,6 +187,8 @@ function getPhraseBank(storyId, mode) {
 
   const base = mode === "challenge" ? commonChallenge : commonLearn;
 
+  if(!storyId) return base;
+  
   if (storyId === "detective_v1") return base.concat(mode === "challenge" ? detectiveChallenge : detectiveLearn);
   if (storyId === "heist_v1") return base.concat(mode === "challenge" ? heistChallenge : heistLearn);
   if (storyId === "spy_v1") return base.concat(mode === "challenge" ? spyChallenge : spyLearn);
@@ -196,9 +198,10 @@ function getPhraseBank(storyId, mode) {
   return base;
 }
 
-export function buildNarrative({ storyId, mode, topic, problemId, originalTitle, originalDescription, language }) {
+export function buildNarrative({ storyId, mode, topic, problemId, originalTitle, originalDescription, language, skipAi }) {
   const templateId = getTemplateId(storyId, topic, mode);
-  const phrase = pickDeterministic(getPhraseBank(storyId, mode), `${problemId}_${language}_${mode}_${topic}`);
+  const effectiveStoryId = skipAi ? null : storyId;  // if skipping AI, also skip story-specific phrasing to keep it more neutral
+  const phrase = pickDeterministic(getPhraseBank(effectiveStoryId, mode), `${problemId}_${language}_${mode}_${topic}`);
 
   // Keep the original meaning, add a story wrapper
   const narrativeTitle = `${phrase} (${topic})`;
