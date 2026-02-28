@@ -30,12 +30,12 @@ function getPhraseBank(storyId, mode) {
     "No room for mistakes on this one.",
     "This is a serious test of skill.",
     "Every detail matters here.",
-    "Push yourself — this one demands it.",
+    "Push yourself - this one demands it.",
     "The pressure is on. Perform.",
     "This is not the time for guessing.",
     "Your sharpest thinking is required.",
     "There is no shortcut through this one.",
-    "Stay focused — complexity is ahead.",
+    "Stay focused - complexity is ahead.",
     "This problem separates good from great.",
     "Bring everything you have to this one.",
     "The difficulty is real. So is the reward."
@@ -66,7 +66,7 @@ function getPhraseBank(storyId, mode) {
     "Detective, you must verify every detail.",
     "Detective, one wrong move ruins the trail.",
     "Detective, the pressure from above is mounting.",
-    "Detective, the evidence is fragile — handle it carefully.",
+    "Detective, the evidence is fragile - handle it carefully.",
     "Detective, the courtroom is waiting for your findings.",
     "Detective, your reputation is on the line.",
     "Detective, the killer knows you're closing in.",
@@ -77,40 +77,40 @@ function getPhraseBank(storyId, mode) {
     "Detective, solve this before the trail goes cold forever."
   ];
 
-  const pirateLearn = [
-    "Captain, the crew requests guidance.",
-    "Captain, your map shows a new route.",
-    "Captain, a sealed chest contains a puzzle.",
-    "Captain, the lookout reports strange signals.",
-    "Captain, the ship's log needs an answer.",
-    "Captain, the navigator has charted a new course.",
-    "Captain, a message in a bottle washed ashore.",
-    "Captain, the first mate found something in the cargo hold.",
-    "Captain, the stars are pointing to new waters.",
-    "Captain, a riddle guards the next island.",
-    "Captain, the old map has a new marking on it.",
-    "Captain, the crew is ready for your next order.",
-    "Captain, the tide is right for a new venture.",
-    "Captain, a merchant ship carries a curious challenge.",
-    "Captain, the crow's nest spotted something on the horizon."
+  const heistLearn = [
+    "Crew, a new target has been scouted.",
+    "Crew, the blueprints just came in.",
+    "Crew, the inside man flagged a new opportunity.",
+    "Crew, the mark's schedule has been mapped out.",
+    "Crew, a fresh job is on the table.",
+    "Crew, the planner left you a new assignment.",
+    "Crew, recon on the next vault is ready.",
+    "Crew, a low-risk practice run has been lined up.",
+    "Crew, the fixer needs this solved before the job.",
+    "Crew, the next drill is loaded in the simulator.",
+    "Crew, the digital lock schematic needs analysis.",
+    "Crew, the front operation needs a working system.",
+    "Crew, a test run on the backup server is authorized.",
+    "Crew, the safecracker left notes you need to decode.",
+    "Crew, the getaway route depends on cracking this first."
   ];
 
-  const pirateChallenge = [
-    "Captain, this raid decides everything.",
-    "Captain, enemies are closing in fast.",
-    "Captain, the treasure route is guarded.",
-    "Captain, the storm won't wait for you.",
-    "Captain, your crew is counting on this.",
-    "Captain, rival pirates have found the same map.",
-    "Captain, the naval fleet is on your tail.",
-    "Captain, one wrong heading and the ship runs aground.",
-    "Captain, the treasure is booby-trapped — think carefully.",
-    "Captain, mutiny brews if you fail this raid.",
-    "Captain, the harbor master is bribed — you have one shot.",
-    "Captain, the kraken stirs in these waters.",
-    "Captain, the cannon is loaded but ammunition is limited.",
-    "Captain, every crew member's life depends on your call.",
-    "Captain, the enemy has cracked half your code already."
+  const heistChallenge = [
+    "Crew, the vault closes in minutes.",
+    "Crew, the security system just upgraded - adapt.",
+    "Crew, one wrong move triggers the silent alarm.",
+    "Crew, the window to execute is closing fast.",
+    "Crew, the mark has a counter-intrusion AI running.",
+    "Crew, the backup guard rotation starts soon.",
+    "Crew, there is no second attempt on this job.",
+    "Crew, every second inside increases the risk.",
+    "Crew, the entire score depends on this step.",
+    "Crew, the rival crew is hitting the same vault tonight.",
+    "Crew, the inside man's cover breaks if this takes too long.",
+    "Crew, the digital trail must be clean - no traces.",
+    "Crew, the getaway driver is already waiting.",
+    "Crew, the client pulls the contract if this fails.",
+    "Crew, precision is the only thing standing between you and the score."
   ];
 
   const spyLearn = [
@@ -145,52 +145,52 @@ function getPhraseBank(storyId, mode) {
     "Agent, communications go dark after this transmission.",
     "Agent, the enemy has your last known position.",
     "Agent, this operation cannot leave a trace behind.",
-    "Agent, your backup has been compromised — you're alone.",
+    "Agent, your backup has been compromised - you're alone.",
     "Agent, the window for success is closing rapidly."
   ];
 
-  const cyberpunkLearn = [
-    "Runner, a new contract just hit the net.",
-    "Runner, your deck is picking up a signal.",
-    "Runner, the next node is waiting to be cracked.",
-    "Runner, a fresh exploit path has been found.",
-    "Runner, your fixer sent over a new job.",
-    "Runner, a data cache has been flagged for extraction.",
-    "Runner, your AI companion flagged an anomaly.",
-    "Runner, the underground forum posted a new bounty.",
-    "Runner, a backdoor has been discovered in the system.",
-    "Runner, your netrunner kit has a new tool ready.",
-    "Runner, the grid is quiet — perfect time to practice.",
-    "Runner, an encrypted packet arrived from an unknown source.",
-    "Runner, your reputation earns you access to this job.",
-    "Runner, the training sim has a new module loaded.",
-    "Runner, a low-security node is open for practice."
+  const sentinelLearn = [
+    "Ghost, someone out there needs your help.",
+    "Ghost, an anonymous tip just hit your terminal.",
+    "Ghost, the vulnerable have no one else to call.",
+    "Ghost, you picked up a distress signal on the dark net.",
+    "Ghost, a new threat is targeting ordinary people.",
+    "Ghost, your scanner flagged something the system ignored.",
+    "Ghost, nobody sent you here. Your conscience did.",
+    "Ghost, the underground channel posted a cry for help.",
+    "Ghost, you work off the grid for a reason. Now use it.",
+    "Ghost, your tools are sharp and the cause is clear.",
+    "Ghost, a new pattern of predatory attacks has surfaced.",
+    "Ghost, no payment, no contract, just a problem to solve.",
+    "Ghost, the people the system failed are counting on this.",
+    "Ghost, your next move is yours alone to decide.",
+    "Ghost, another injustice the authorities chose to ignore."
   ];
 
-  const cyberpunkChallenge = [
-    "Runner, ICE is closing in fast.",
-    "Runner, the corp's black site is heavily guarded.",
-    "Runner, one wrong packet and you're flatlined.",
-    "Runner, this intrusion has zero margin for error.",
-    "Runner, the countermeasures are already active.",
-    "Runner, the sysadmin just triggered an alert.",
-    "Runner, black ICE detected on the next layer.",
-    "Runner, the corp is tracing your signal right now.",
-    "Runner, every millisecond you're exposed costs you.",
-    "Runner, the firewall is adaptive — it learns as you probe.",
-    "Runner, three failed attempts and the system locks forever.",
-    "Runner, a rival runner is racing you to the same node.",
-    "Runner, the data self-destructs if extraction takes too long.",
-    "Runner, your deck is overheating — finish this fast.",
-    "Runner, the megacorp has its best AI defending this vault."
+  const sentinelChallenge = [
+    "Ghost, the heist crew is moments away from the score.",
+    "Ghost, real people lose everything if you fail this.",
+    "Ghost, no backup, no authority, just you and the problem.",
+    "Ghost, the crew has more resources and you have more principle.",
+    "Ghost, the system will not act, so you must.",
+    "Ghost, the attacker is deep inside and moving fast.",
+    "Ghost, you made a promise to the people on the other side of this.",
+    "Ghost, the trail goes cold if you do not move right now.",
+    "Ghost, corporations will not fix this. You will.",
+    "Ghost, the crew did not expect anyone to fight back.",
+    "Ghost, leave no trace of yourself, only of your work.",
+    "Ghost, this one is personal. Someone you know is the target.",
+    "Ghost, the clock is running and no one is coming to help you.",
+    "Ghost, do it right, do it clean, do it for the right reasons.",
+    "Ghost, when it is done the world will not know your name. That is the point."
   ];
 
   const base = mode === "challenge" ? commonChallenge : commonLearn;
 
   if (storyId === "detective_v1") return base.concat(mode === "challenge" ? detectiveChallenge : detectiveLearn);
-  if (storyId === "pirate_v1") return base.concat(mode === "challenge" ? pirateChallenge : pirateLearn);
+  if (storyId === "heist_v1") return base.concat(mode === "challenge" ? heistChallenge : heistLearn);
   if (storyId === "spy_v1") return base.concat(mode === "challenge" ? spyChallenge : spyLearn);
-  if (storyId === "cyberpunk_v1") return base.concat(mode === "challenge" ? cyberpunkChallenge : cyberpunkLearn);
+  if (storyId === "sentinel_v1") return base.concat(mode === "challenge" ? sentinelChallenge : sentinelLearn);
 
   // other stories fall back to base
   return base;

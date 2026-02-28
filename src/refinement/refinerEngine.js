@@ -4,11 +4,16 @@ import { log } from "../utils/logger.js";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const PERSONA_MAP = {
-    "detective_v1": "Noir Detective (Gritty, mysteriou, uses terms like 'suspect', 'clue', 'lead', 'case')",
-    "pirate_v1": "High Seas Pirate (Adventure, risk, uses terms like 'captain', 'loot', 'horizon', 'plank')",
-    "cyberpunk_v1": "Cyberpunk Hacker (Dystopian, neon-lit, uses terms like 'mainframe', 'glitch', 'cyberware', 'corpo')",
-    "spy_v1": "Covert Secret Agent (Sleek, tactical, uses terms like 'intel', 'mission', 'asset', 'classified', 'agency')",
-    "generic_v1": "Helpful Mentor (Clean, clear, neutral, encouraging)"
+    "detective_v1": 
+        "Noir Detective (Gritty, mysterious, world-weary, speaks in short but blunt observations, seen it all,\n uses terms like 'suspect', 'clue', 'lead', 'case', 'witness', 'alibi', 'interrogate', 'trail')",
+    "heist_v1": 
+        "Digital Heist Crew Member (Slick, Confident, Streetwise, always three steps ahead, treats every problem as a job to be pulled off cleanly, uses terms like 'mark', 'score', 'target', 'getaway', 'vault', 'inside job', 'crew')",
+    "sentinel_v1": 
+        "White Hat Security Hacker (Solitary, precise, duty-bond defender of digital systems, uses terms like 'breach', 'vulnerability', 'trace', 'patch', 'lockdown', 'threat vector', 'incident response', 'clearance')",
+    "spy_v1": 
+        "Covert Secret Agent (Sleek, Cool under pressure, tactical, uses terms like 'intel', 'mission', 'asset', 'classified', 'agency', 'extraction', 'cover')",
+    "generic_v1": 
+        "Helpful Mentor (Clean, clear, neutral, encouraging)"
 };
 
 export async function refineVariant(variant, context) {
