@@ -32,7 +32,6 @@ import {
 } from "../registry/usageRegistry.js";
 
 import { validateOutputRecord } from "../validator/outputValidator.js";
-import { Files } from 'groq-sdk/resources.mjs';
 
 function getSetting(short, long, envKey, fallback = null) {
   const longIdx = process.argv.indexOf(`--${long}`);
@@ -79,7 +78,7 @@ async function main() {
   const count = toNumberOrFallback(getSetting("c", "count", null, null), null); //override number of questions to select for the isolated batch (Only for Learn mode)
   const language = getSetting("lang", "language", null, null);  //override language selection (e.g. only generate variants for Python) - currently only supported in Learn mode
 
-  const clearOutputs = hasFlag("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
+  const clearOutputs = getSetting("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
   
   // Check for AI flags
   const useAi = process.argv.includes("-ai") || process.argv.includes("--ai-refine");
@@ -195,14 +194,14 @@ async function main() {
     const outputDir = path.join("data", "output");  
 
     const prefixMap = {
-      "learn": f => f.startsWith("learn_programming"),
-      "learn:easy": f => f.startsWith("learn_programming_easy"),
-      "learn:medium": f => f.startsWith("learn_programming_medium"),
-      "learn:hard": f => f.startsWith("learn_programming_hard"),
-      "learn:hard:python": f => f.startsWith("learn_programming_hard") && f.includes("_python"),
-      "learn:hard:java": f => f.startsWith("learn_programming_hard") && f.includes("_java"),
-      "learn:hard:cpp": f => f.startsWith("learn_programming_hard") && f.includes("_cpp"),
-      "learn:hard:javascript": f => f.startsWith("learn_programming_hard") && f.includes("_javascript"),
+      "learn": f => f === "learn_programming.json",
+      "learn:easy": f => f === "learn_programming_easy.json",
+      "learn:medium": f => f === "learn_programming_medium.json",
+      "learn:hard": f => f ==="learn_programming_hard.json",
+      "learn:hard:python": f => f === "learn_programming_hard_python.json",
+      "learn:hard:java": f => f === "learn_programming_hard_java.json",
+      "learn:hard:cpp": f => f === "learn_programming_hard_cpp.json",
+      "learn:hard:javascript": f => f === "learn_programming_hard_javascript.json",
       "all": f => f.startsWith("learn_programming") || f.startsWith("challenges_phase_")
     };
 
@@ -217,7 +216,8 @@ async function main() {
       throw new Error(`Invalid clear-outputs value '${clearOutputs}'. Valid options: ${Object.keys(prefixMap).join(", ")}`);
     }
 
-    const matched = Files.filter(matcher);
+    const files = fs.readdirSync(outputDir).filter(f => f.endsWith(".json"));
+    const matched = files.filter(matcher);
 
     if (matched.length === 0) {
       log.info(`No output files found matching '${clearOutputs}'.`);
