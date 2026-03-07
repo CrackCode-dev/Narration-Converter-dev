@@ -17,7 +17,7 @@ import { makeLanguageVariants } from "../narrative/variantMaker.js";
 import { refineVariant } from "../refinement/refinerEngine.js"; 
 
 import { pickLearnProblems } from "../selector/learnSelector.js";
-import { pickChallengeHardPhase } from "../selector/challengeSelector.js";
+import { pickChallengePhase } from "../selector/challengeSelector.js";
 
 import {
   loadUsageRegistry,
