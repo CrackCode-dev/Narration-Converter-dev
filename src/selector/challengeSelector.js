@@ -19,13 +19,13 @@
  * @returns {Object} { selected, meta }
  */
 export function pickChallengePhase({
-  eligibibleProblems,
+  eligibleProblems,
   learnUsedSet,
   challengeUsedSet,
   phaseSize
 }) {
   // 1) Remove anything already used in Learn (no overlap rule)
-  const notInLearn = eligibibleProblems.filter((p) => !learnUsedSet.has(p.problemId));
+  const notInLearn = eligibleProblems.filter((p) => !learnUsedSet.has(p.problemId));
 
   // If Learn already consumed all hard questions, challenges cannot be built (for this dataset)
   if (notInLearn.length === 0) {

@@ -19,6 +19,8 @@ import { refineVariant } from "../refinement/refinerEngine.js";
 import { pickLearnProblems } from "../selector/learnSelector.js";
 import { pickChallengePhase } from "../selector/challengeSelector.js";
 
+import { uploadAllFromDirectory } from '../uploader/uploadFromJson.js';
+
 import {
   loadUsageRegistry,
   saveUsageRegistry,
@@ -75,7 +77,10 @@ async function main() {
   const phase = toNumberOrFallback(getSetting("p", "phase", null, "1"), 1);
 
   const difficulty = getSetting("diff", "difficulty", null, null);  //isolate each batch based on difficulty level (Only for Learn mode)
-  const count = toNumberOrFallback(getSetting("c", "count", null, null), null); //override number of questions to select for the isolated batch (Only for Learn mode)
+
+  const countRaw = getSetting("c", "count", null, null); //override number of questions to select for the isolated batch (Only for Learn mode)
+  const count = countRaw !== null ? toNumberOrFallback(countRaw, null) : null; //null means fallback to selection_rules.json value
+
   const language = getSetting("lang", "language", null, null);  //override language selection (e.g. only generate variants for Python) - currently only supported in Learn mode
 
   const clearOutputs = getSetting("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
@@ -83,6 +88,8 @@ async function main() {
   // Check for AI flags
   const useAi = process.argv.includes("-ai") || process.argv.includes("--ai") || process.argv.includes("--ai-refine");
   const skipAi = !useAi; // For clarity in passing to functions
+
+  const shouldUpload = hasFlag("u", "upload");
 
   // Limit concurrency to 1 to strictly control the rate.
   const limit = pLimit(1); 
@@ -197,11 +204,23 @@ async function main() {
       "learn": f => f === "learn_programming.json",
       "learn:easy": f => f === "learn_programming_easy.json",
       "learn:medium": f => f === "learn_programming_medium.json",
-      "learn:hard": f => f ==="learn_programming_hard.json",
+      "learn:hard": f => f === "learn_programming_hard.json",
+      "learn:easy:python": f => f === "learn_programming_easy_python.json",
+      "learn:easy:java": f => f === "learn_programming_easy_java.json",
+      "learn:easy:cpp": f => f === "learn_programming_easy_cpp.json",
+      "learn:easy:javascript": f => f === "learn_programming_easy_javascript.json",
+      "learn:medium:python": f => f === "learn_programming_medium_python.json",
+      "learn:medium:java": f => f === "learn_programming_medium_java.json",
+      "learn:medium:cpp": f => f === "learn_programming_medium_cpp.json",
+      "learn:medium:javascript": f => f === "learn_programming_medium_javascript.json",
       "learn:hard:python": f => f === "learn_programming_hard_python.json",
       "learn:hard:java": f => f === "learn_programming_hard_java.json",
       "learn:hard:cpp": f => f === "learn_programming_hard_cpp.json",
       "learn:hard:javascript": f => f === "learn_programming_hard_javascript.json",
+      "challenge:python:phase1": f => f === "challenges_phase_1_python.json",
+      "challenge:java:phase1": f => f === "challenges_phase_1_java.json",
+      "challenge:cpp:phase1": f => f === "challenges_phase_1_cpp.json",
+      "challenge:javascript:phase1": f => f === "challenges_phase_1_javascript.json",
       "all": f => f.startsWith("learn_programming") || f.startsWith("challenges_phase_")
     };
 
@@ -372,6 +391,12 @@ async function main() {
   });
 
   log.info(`✅ Wrote Learn output: ${outPath} (AI Refinement: ${useAi ? "ON" : "OFF"})`);
+
+  if(shouldUpload) {
+    log.info(`[Upload] Scanning output directory for learn files...`);
+    await uploadAllFromDirectory(path.join("data", "output"), "learn");
+  }
+
   return;
 }
 
@@ -379,7 +404,7 @@ async function main() {
 if (mode === "challenge") {
   const challengeEligibleProblems = enrichedProblems.filter(p => p.difficulty === "Hard" || p.difficulty === "Medium");
 
-  const { selected, meta } = pickChallengeHardPhase({
+  const { selected, meta } = pickChallengePhase({
     eligibleProblems: challengeEligibleProblems,
     learnUsedSet,
     challengeUsedSet,
@@ -470,6 +495,12 @@ if (mode === "challenge") {
   });
 
   log.info(`✅ Wrote Challenge output: ${outPath} (AI Refinement: ${useAi ? "ON" : "OFF"})`);
+
+  if(shouldUpload) {
+    log.info(`[Upload] Scanning output directory for challenge files...`);
+    await uploadAllFromDirectory(path.join("data", "output"), `challenge:phase${phase}`);
+  }
+
   return;
 }
 

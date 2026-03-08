@@ -8,6 +8,7 @@ data/output/
 # Environment variables
 .env
 .env.local
+API_KEYS
 
 # OS files
 .DS_Store
