@@ -1,8 +1,8 @@
 {
   "languageToStory": {
     "python": "detective_v1",
-    "java": "pirate_v1",
-    "cpp": "cyberpunk_v1",
+    "java": "heist_v1",
+    "cpp": "sentinel_v1",
     "javascript": "spy_v1"
   },
   "defaultStory": "generic_v1",

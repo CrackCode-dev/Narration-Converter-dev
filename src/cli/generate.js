@@ -17,22 +17,23 @@ import { makeLanguageVariants } from "../narrative/variantMaker.js";
 import { refineVariant } from "../refinement/refinerEngine.js"; 
 
 import { pickLearnProblems } from "../selector/learnSelector.js";
-import { pickChallengeHardPhase } from "../selector/challengeSelector.js";
+import { pickChallengePhase } from "../selector/challengeSelector.js";
+
+import { uploadAllFromDirectory } from '../uploader/uploadFromJson.js';
 
 import {
   loadUsageRegistry,
   saveUsageRegistry,
   getLearnUsedSet,
-  getChallengeUsedHardSet,
+  getChallengeUsedSet,
   addLearnUsed,
-  addChallengeUsedHard,
+  addChallengeUsed,
   resetRegistryAll,
   resetRegistryLearnOnly,
   resetRegistryChallengesOnly
 } from "../registry/usageRegistry.js";
 
 import { validateOutputRecord } from "../validator/outputValidator.js";
-
 
 function getSetting(short, long, envKey, fallback = null) {
   const longIdx = process.argv.indexOf(`--${long}`);
@@ -74,9 +75,21 @@ async function main() {
   const dataset = getSetting("d", "dataset", "DEFAULT_DATASET", "datasetA");
   const mode = getSetting("m", "mode", "DEFAULT_MODE"); 
   const phase = toNumberOrFallback(getSetting("p", "phase", null, "1"), 1);
+
+  const difficulty = getSetting("diff", "difficulty", null, null);  //isolate each batch based on difficulty level (Only for Learn mode)
+
+  const countRaw = getSetting("c", "count", null, null); //override number of questions to select for the isolated batch (Only for Learn mode)
+  const count = countRaw !== null ? toNumberOrFallback(countRaw, null) : null; //null means fallback to selection_rules.json value
+
+  const language = getSetting("lang", "language", null, null);  //override language selection (e.g. only generate variants for Python) - currently only supported in Learn mode
+
+  const clearOutputs = getSetting("clr", "clear-outputs", null, null); //Clear out preferred previously generated output files
   
   // Check for AI flags
-  const useAi = process.argv.includes("--ai") || process.argv.includes("--ai-refine");
+  const useAi = process.argv.includes("-ai") || process.argv.includes("--ai") || process.argv.includes("--ai-refine");
+  const skipAi = !useAi; // For clarity in passing to functions
+
+  const shouldUpload = hasFlag("u", "upload");
 
   // Limit concurrency to 1 to strictly control the rate.
   const limit = pLimit(1); 
@@ -98,11 +111,15 @@ async function main() {
       "  -d, --dataset <name>\n" +
       "  -i, --input <path>\n" +
       "  -p, --phase <N>\n" +
-      "  --ai, --ai-refine       (Enable AI Refinement)\n" +
+      " -diff, --difficulty <Easy|Medium|Hard> (Learn: isolate by difficulty)\n" +
+      " -c, --count <N>                (Learn: override question count)\n" +
+      "  -ai, --ai-refine       (Enable AI Refinement)\n" +
       "Reset Flags:\n" +
       "  -R,  --reset-registry\n" +
       "  -rl, --reset-learn-only\n" +
-      "  -rc, --reset-challenges-only"
+      "  -rc, --reset-challenges-only\n" + 
+      "Output Flags:\n" + 
+      "  -clr, --clear-outputs <type>   Types: all, learn, learn:easy, learn:medium, learn:hard, learn:hard:python, learn:hard:java, learn:hard:cpp, learn:hard:javascript, challenge, challenge:phase<N>"
     );
     process.exit(1);
   }
@@ -164,21 +181,91 @@ async function main() {
     resetRegistryAll(registry);
     saveUsageRegistry(registryPath, registry);
     log.warn("Registry reset: ALL cleared.");
+    process.exit(0); // Exit after full reset to avoid accidental generation
   } else {
     if (resetLearnOnly) {
       resetRegistryLearnOnly(registry);
       saveUsageRegistry(registryPath, registry);
       log.warn("Registry reset: LEARN cleared.");
+      process.exit(0); // Exit after full reset to avoid accidental generation
     }
     if (resetChallengesOnly) {
       resetRegistryChallengesOnly(registry);
       saveUsageRegistry(registryPath, registry);
       log.warn("Registry reset: CHALLENGES cleared.");
+      process.exit(0); // Exit after full reset to avoid accidental generation
     }
   }
 
+  if (clearOutputs) {
+    const outputDir = path.join("data", "output");  
+
+    const prefixMap = {
+      "learn": f => f === "learn_programming.json",
+      "learn:easy": f => f === "learn_programming_easy.json",
+      "learn:medium": f => f === "learn_programming_medium.json",
+      "learn:hard": f => f === "learn_programming_hard.json",
+      "learn:easy:python": f => f === "learn_programming_easy_python.json",
+      "learn:easy:java": f => f === "learn_programming_easy_java.json",
+      "learn:easy:cpp": f => f === "learn_programming_easy_cpp.json",
+      "learn:easy:javascript": f => f === "learn_programming_easy_javascript.json",
+      "learn:medium:python": f => f === "learn_programming_medium_python.json",
+      "learn:medium:java": f => f === "learn_programming_medium_java.json",
+      "learn:medium:cpp": f => f === "learn_programming_medium_cpp.json",
+      "learn:medium:javascript": f => f === "learn_programming_medium_javascript.json",
+      "learn:hard:python": f => f === "learn_programming_hard_python.json",
+      "learn:hard:java": f => f === "learn_programming_hard_java.json",
+      "learn:hard:cpp": f => f === "learn_programming_hard_cpp.json",
+      "learn:hard:javascript": f => f === "learn_programming_hard_javascript.json",
+      "challenge:python:phase1": f => f === "challenges_phase_1_python.json",
+      "challenge:java:phase1": f => f === "challenges_phase_1_java.json",
+      "challenge:cpp:phase1": f => f === "challenges_phase_1_cpp.json",
+      "challenge:javascript:phase1": f => f === "challenges_phase_1_javascript.json",
+      "all": f => f.startsWith("learn_programming") || f.startsWith("challenges_phase_")
+    };
+
+    const challengePhaseMatch = clearOutputs.match(/^challenge:phase(\d+)$/);
+    if (challengePhaseMatch) {
+      const phase = challengePhaseMatch[1];
+      prefixMap[clearOutputs] = f => f.startsWith(`challenges_phase_${phase}`);
+    }
+
+    const matcher = prefixMap[clearOutputs.toLowerCase()];
+    if (!matcher) {
+      throw new Error(`Invalid clear-outputs value '${clearOutputs}'. Valid options: ${Object.keys(prefixMap).join(", ")}`);
+    }
+
+    const files = fs.readdirSync(outputDir).filter(f => f.endsWith(".json"));
+    const matched = files.filter(matcher);
+
+    if (matched.length === 0) {
+      log.info(`No output files found matching '${clearOutputs}'.`);
+    } else {
+      for(const file of matched) {
+        fs.unlinkSync(path.join(outputDir, file));
+        log.info(`Cleared: ${file}`);
+      }
+      log.warn(`Cleared ${matched.length} output file(s).`);
+    }
+    process.exit(0); // Exit after clearing outputs to avoid accidental generation
+  }
+
   const learnUsedSet = getLearnUsedSet(registry);
-  const challengeUsedSet = getChallengeUsedHardSet(registry);
+  const challengeUsedSet = getChallengeUsedSet(registry);
+
+  const validLanguages = rules.languages;
+
+  let activeLanguages;
+  if (language) {
+    const normalizedLanguage = language.toLowerCase();
+    if (!validLanguages.includes(normalizedLanguage)) {
+      throw new Error(`Invalid language '${language}'. Valid options: ${validLanguages.join(", ")}`);
+    }
+    activeLanguages = [normalizedLanguage];
+    log.info(`Language override active. Only generating variants for: ${normalizedLanguage}`);
+  } else {
+    activeLanguages = validLanguages;
+  }
 
   const languages = rules.languages;
   const languageToStory = stories.languageToStory;
@@ -193,15 +280,40 @@ async function main() {
   if (mode === "learn") {
   const availableForLearn = enrichedProblems.filter(p => !learnUsedSet.has(p.problemId));
 
+  let countsPerDifficulty;
+
+  if (difficulty) {
+    const normalizedDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+    const validDifficulties = ["Easy", "Medium", "Hard"];
+
+    if (!validDifficulties.includes(normalizedDifficulty)) {
+      throw new Error(`Invalid --difficulty value '${difficulty}'. Must be Easy, Medium, or Hard.`);
+    }
+
+    const resolvedCount = count ?? rules.learn.countsPerDifficulty[normalizedDifficulty];
+
+    if (!resolvedCount) {
+      throw new Error(
+        `No count found for difficulty '${normalizedDifficulty}'. ` +
+        `Either pass --count or ensure it exists in selection_rules.json.`
+      );
+    }
+
+    countsPerDifficulty = { [normalizedDifficulty]: resolvedCount };
+    log.info(`[Learn Mode] Isolated batch — Difficulty: ${normalizedDifficulty}, Count: ${resolvedCount}`);
+  } else {
+    countsPerDifficulty = rules.learn.countsPerDifficulty;
+  }
+
   const { selected, meta } = pickLearnProblems({
     allProblems: availableForLearn,
-    countsPerDifficulty: rules.learn.countsPerDifficulty
+    countsPerDifficulty
   });
 
   addLearnUsed(registry, selected.map(p => p.problemId));
   saveUsageRegistry(registryPath, registry);
 
-  log.info(`[Learn Mode] Selected ${selected.length} problems. Starting AI Refinement...`);
+  log.info(`[Learn Mode] Selected ${selected.length} problems. ${useAi ? "Starting AI Refinement..." : "Starting Manual Conversion..."}`);
 
   const outputItems = [];
   let processedVariants = 0;
@@ -209,12 +321,13 @@ async function main() {
   for (const p of selected) {
     const variants = makeLanguageVariants({
       problemId: p.problemId,
-      languages,
+      languages: activeLanguages,
       languageToStory,
       defaultStory,
       mode: "learn",
       topic: p.topic,
-      original: p.original
+      original: p.original,
+      skipAi
     });
 
     // Refine variants sequentially with proper rate limiting
@@ -230,7 +343,7 @@ async function main() {
         difficulty: p.difficulty,
         topic: p.topic,
         bloom: p.bloom,
-        skipAi: !useAi
+        skipAi
       });
       
       refinedVariants.push({ ...v, narrative: refined });
@@ -261,7 +374,10 @@ async function main() {
     outputItems.push(record);
   }
 
-  const outPath = path.join("data", "output", "learn_programming.json");
+  const difficultyTag = difficulty ? `_${difficulty.toLowerCase()}`: "";
+  const languageTag = language ? `_${language.toLowerCase()}` : "";
+  const outPath = path.join("data", "output", `learn_programming${difficultyTag}${languageTag}.json`);
+
   writeJson(outPath, {
     meta: { 
       dataset, 
@@ -275,15 +391,21 @@ async function main() {
   });
 
   log.info(`✅ Wrote Learn output: ${outPath} (AI Refinement: ${useAi ? "ON" : "OFF"})`);
+
+  if(shouldUpload) {
+    log.info(`[Upload] Scanning output directory for learn files...`);
+    await uploadAllFromDirectory(path.join("data", "output"), "learn");
+  }
+
   return;
 }
 
 // CHALLENGE MODE
 if (mode === "challenge") {
-  const hardProblems = enrichedProblems.filter(p => p.difficulty === "Hard");
+  const challengeEligibleProblems = enrichedProblems.filter(p => p.difficulty === "Hard" || p.difficulty === "Medium");
 
-  const { selected, meta } = pickChallengeHardPhase({
-    hardProblems,
+  const { selected, meta } = pickChallengePhase({
+    eligibleProblems: challengeEligibleProblems,
     learnUsedSet,
     challengeUsedSet,
     phaseSize: rules.challenge.phaseSize
@@ -293,10 +415,10 @@ if (mode === "challenge") {
     .filter(p => !challengeUsedSet.has(p.problemId) && !learnUsedSet.has(p.problemId))
     .map(p => p.problemId);
 
-  addChallengeUsedHard(registry, newUniqueIds, phase);
+  addChallengeUsed(registry, newUniqueIds, phase);
   saveUsageRegistry(registryPath, registry);
 
-  log.info(`[Challenge Mode] Selected ${selected.length} problems. Starting AI Refinement...`);
+  log.info(`[Challenge Mode] Selected ${selected.length} problems. ${useAi ? "Starting AI Refinement..." : "Starting Manual Conversion..."}`);
 
   const outputItems = [];
   let processedVariants = 0;
@@ -304,12 +426,13 @@ if (mode === "challenge") {
   for (const p of selected) {
     const variants = makeLanguageVariants({
       problemId: p.problemId,
-      languages,
+      languages: activeLanguages,
       languageToStory,
       defaultStory,
       mode: "challenge",
       topic: p.topic,
-      original: p.original
+      original: p.original,
+      skipAi
     });
 
     // Refine variants sequentially with proper rate limiting
@@ -325,7 +448,7 @@ if (mode === "challenge") {
         difficulty: p.difficulty,
         topic: p.topic,
         bloom: p.bloom,
-        skipAi: !useAi
+        skipAi
       });
       
       refinedVariants.push({ ...v, narrative: refined });
@@ -356,7 +479,8 @@ if (mode === "challenge") {
     outputItems.push(record);
   }
 
-  const outPath = path.join("data", "output", `challenges_phase_${phase}.json`);
+  const languageTag = language ? `_${language.toLowerCase()}` : "";
+  const outPath = path.join("data", "output", `challenges_phase_${phase}${languageTag}.json`);
   writeJson(outPath, {
     meta: { 
       dataset, 
@@ -371,6 +495,12 @@ if (mode === "challenge") {
   });
 
   log.info(`✅ Wrote Challenge output: ${outPath} (AI Refinement: ${useAi ? "ON" : "OFF"})`);
+
+  if(shouldUpload) {
+    log.info(`[Upload] Scanning output directory for challenge files...`);
+    await uploadAllFromDirectory(path.join("data", "output"), `challenge:phase${phase}`);
+  }
+
   return;
 }
 

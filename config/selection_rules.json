@@ -7,8 +7,9 @@
     }
   },
   "challenge": {
-    "difficulty": "Hard",
-    "phaseSize": 30
+    "phaseSize": 15,
+    "hardCount": 10,
+    "mediumCount": 5
   },
   "languages": ["python", "java", "cpp", "javascript"]
 }
