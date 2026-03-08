@@ -13,6 +13,7 @@ The generator operates independently as an offline content preparation tool, ens
 * Added generation overrides for `--language`, `--difficulty`, and `--count`.
 * Added output cleanup support with `-clr` / `--clear-outputs`.
 * Added scoped registry reset commands: full reset, learn-only reset, and challenge-only reset.
+* Upgraded AI refinement with **persona style guides, few-shot conditioning, phrase blacklists, structural enforcement, and JSON repair/retry fallback**.
 
 ---
 
@@ -53,8 +54,14 @@ The tool integrates an **AI refinement layer** powered by **Groq's LLaMA 3.3 70B
 
 **Key Features:**
 - Difficulty-aware tone adjustment (Easy: encouraging, Medium: focused, Hard: high-stakes)
+- Persona-specific style fingerprints (voice, syntax rhythm, metaphor rules) per storyline
+- Few-shot persona exemplars to keep title/description quality consistent
+- Anti-pattern blacklist + regex AI-ism scrubber for less generic LLM phrasing
+- Structural enforcement for 3-part description flow (opening, body, actionable numbered steps)
+- Dynamic flavor phrase injection pools for variation without changing task semantics
 - Preserves coding task, constraints, and technical details
 - Automatic fallback to original content if refinement fails
+- Dual-pass resilience: JSON mode call + non-JSON retry with JSON repair extraction
 - Rate-limited API calls (30 requests/min)
 
 **Enable with:** `-ai` or `--ai-refine` flag
@@ -305,6 +312,7 @@ npm run generate -- -m learn -clr all
 - **Challenge Mode**: Produces Medium and Hard questions, split into phases (30 per phase). Supports single-language override and ensures no overlap with Learn-used questions or previous challenge phases.
 - **Narrative Generation**: Creates language variants for Python, Java, C++, and JavaScript with story-specific personas.
 - **AI Refinement**: Optionally refines narrative titles and descriptions using LLM with rate limiting (max 30 requests/minute).
+- **AI Safety & Robustness**: Cleans banned generic phrasing, repairs malformed model JSON, and enforces consistent output structure before persisting.
 - **Registry**: `data/registry/usage_registry.json` tracks used questions to prevent duplicates unless manually reset.
 - **Upload**: Routes each output JSON file to MongoDB collections using mode, language, and difficulty with upsert semantics. For reliable language-specific routing, use single-language output files.
 
