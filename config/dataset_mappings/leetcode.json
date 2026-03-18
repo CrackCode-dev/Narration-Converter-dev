@@ -6,9 +6,9 @@
     "title": "title",
     "description": "description",
     "difficulty": "difficulty",
-    "examples": null,
+    "isPremium": "is_premium",
+    "examples": null, 
     "constraints": null,
-    "testCases": null,
-    "isPremium": "is_premium"
+    "testCases": null
   }
 }
