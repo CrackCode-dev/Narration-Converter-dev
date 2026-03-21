@@ -13,3 +13,17 @@ API_KEYS
 # OS files
 .DS_Store
 Thumbs.db
+
+# Ignore JavaScript test files and test directories
+# Common test file patterns (Jest, Mocha, etc.)
+*.test.js
+*.spec.js
+*.test.jsx
+*.spec.jsx
+*.test.mjs
+*.spec.mjs
+
+# Test folders
+test/
+tests/
+__tests__/
