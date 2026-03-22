@@ -1,3 +1,6 @@
+import { parseDescription, hasEmbeddedStructure } from "./descriptionParser.js";
+import { log } from "../utils/logger.js";
+
 function normalizeDifficulty(value) {
   if (!value) return null;
   const v = String(value).toLowerCase();
@@ -30,6 +33,14 @@ function parseJsonIfPossible(value, fieldName) {
   }
 }
 
+/**
+ * Strip carriage returns and backticks from a string.
+ */
+function cleanText(text) {
+  if (!text) return text;
+  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/`/g, "");
+}
+
 export function normalizeCsvRowToProblem(row, mappingConfig) {
   const cols = mappingConfig.columns;
 
@@ -42,7 +53,7 @@ export function normalizeCsvRowToProblem(row, mappingConfig) {
     throw new Error("Missing one of: id/title/description/difficulty");
   }
 
-  // optional (leetcode one isPremium field)
+  // optional (leetcode has isPremium field)
   const isPremiumRaw = cols.isPremium ? readField(row, cols.isPremium) : null;
   const isPremium = isPremiumRaw ? (String(isPremiumRaw) === "1") : false;
 
@@ -53,9 +64,33 @@ export function normalizeCsvRowToProblem(row, mappingConfig) {
   const constraintsRaw = readField(row, cols.constraints);
   const testCasesRaw = readField(row, cols.testCases);
 
-  const examples = parseJsonIfPossible(examplesRaw, "examples");
-  const constraints = parseJsonIfPossible(constraintsRaw, "constraints");
-  const test_cases = parseJsonIfPossible(testCasesRaw, "test_cases");
+  let examples = parseJsonIfPossible(examplesRaw, "examples");
+  let constraints = parseJsonIfPossible(constraintsRaw, "constraints");
+  let test_cases = parseJsonIfPossible(testCasesRaw, "test_cases");
+
+  // ── Fallback: extract from description when structured fields are missing ──
+  // This handles datasets like LeetCode where examples and constraints
+  // are embedded in the description body rather than stored as separate fields.
+  let cleanDescription = cleanText(description);
+
+  if ((examples === null || constraints === null) && hasEmbeddedStructure(description)) {
+    const parsed = parseDescription(description);
+
+    if (examples === null && parsed.examples) {
+      examples = parsed.examples;
+      log.info(`[Parser] Extracted ${parsed.examples.length} example(s) from description for ID ${sourceId}`);
+    }
+
+    if (constraints === null && parsed.constraints) {
+      constraints = parsed.constraints;
+      log.info(`[Parser] Extracted ${parsed.constraints.length} constraint(s) from description for ID ${sourceId}`);
+    }
+
+    // Use the clean description (without examples/constraints) for narrative
+    if (parsed.cleanDescription) {
+      cleanDescription = parsed.cleanDescription;
+    }
+  }
 
   return {
     source: {
@@ -63,9 +98,11 @@ export function normalizeCsvRowToProblem(row, mappingConfig) {
       source_question_id: String(sourceId)
     },
     original: {
-      title: String(title),
-      description: String(description)
+      title: cleanText(String(title)),
+      description: cleanDescription
     },
+    // Keep the full raw description available for AI test case generation
+    rawDescription: cleanText(String(description)),
     difficulty,
     isPremium,
     examples,
@@ -77,9 +114,31 @@ export function normalizeCsvRowToProblem(row, mappingConfig) {
   };
 }
 
-export function ensureExecutionFieldsExist(problem) {
-  // Required for judge + platform reliability
-  if (problem.examples === null || problem.constraints === null || problem.test_cases === null) {
-    throw new Error("Missing examples/constraints/test_cases (execution required).");
+/**
+ * Validates that execution-critical fields exist.
+ *
+ * When `allowAiFallback` is true, missing test_cases are permitted because
+ * the AI refinement layer will generate them downstream.
+ *
+ * @param {Object} problem - The normalized problem object
+ * @param {Object} [options]
+ * @param {boolean} [options.allowAiFallback=false] - If true, tolerate missing test_cases
+ */
+export function ensureExecutionFieldsExist(problem, options = {}) {
+  const { allowAiFallback = false } = options;
+
+  if (problem.examples === null) {
+    throw new Error("Missing examples (not found in fields or description). Execution required.");
+  }
+
+  if (problem.constraints === null) {
+    throw new Error("Missing constraints (not found in fields or description). Execution required.");
+  }
+
+  if (problem.test_cases === null && !allowAiFallback) {
+    throw new Error(
+      "Missing test_cases (execution required). " +
+      "Use the -ai flag to auto-generate test cases, or provide them in the dataset."
+    );
   }
 }

@@ -36,8 +36,8 @@ Converts plain logic problems into engaging stories. Each programming language f
 | Language | Narrative Theme |
 | :--- | :--- |
 | **Python** | Noir Detective storyline |
-| **Java** | High Seas Pirate adventure |
-| **C++** | Cyberpunk Hacker storyline |
+| **Java** | Heist Crew storyline |
+| **C++** | Sentinel Hacker storyline |
 | **JavaScript** | Covert Secret Agent / Spy thriller |
 
 > **Note:** The narrative only affects the flavor text; problem logic remains identical across all versions.
