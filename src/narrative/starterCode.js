@@ -8,9 +8,9 @@
  */
 
 const TEMPLATES = {
-    python: {
-        function:
-`from typing import List
+  python: {
+    function:
+      `from typing import List
 
 def solve(params):
     """
@@ -18,8 +18,8 @@ def solve(params):
     """
     pass
 `,
-        program:
-`import sys
+    program:
+      `import sys
 
 def solve(params):
     """
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     result = solve(data)
     print(result)
 `
-    },
+  },
 
-    java: {
-        function:
-`import java.util.*;
+  java: {
+    function:
+      `import java.util.*;
 
 public class Main {
     /**
@@ -48,8 +48,8 @@ public class Main {
     }
 }
 `,
-        program:
-`import java.io.*;
+    program:
+      `import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -68,11 +68,11 @@ public class Main {
     }
 }
 `
-    },
+  },
 
-    cpp: {
-        function:
-`#include <bits/stdc++.h>
+  cpp: {
+    function:
+      `#include <bits/stdc++.h>
 using namespace std;
 
 // TODO: implement solution
@@ -80,8 +80,8 @@ int solve() {
     return 0;
 }
 `,
-        program:
-`#include <bits/stdc++.h>
+    program:
+      `#include <bits/stdc++.h>
 using namespace std;
 
 // TODO: implement solution
@@ -97,11 +97,11 @@ int main() {
     return 0;
 }
 `
-    },
+  },
 
-    javascript: {
-        function:
-`/**
+  javascript: {
+    function:
+      `/**
  * TODO: implement solution
  * @returns {any}
  */
@@ -111,8 +111,8 @@ function solve() {
 
 if (typeof module !== 'undefined') module.exports = solve;
 `,
-        program:
-`'use strict';
+    program:
+      `'use strict';
 const fs = require('fs');
 
 /**
@@ -128,7 +128,7 @@ const data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);
 const result = solve();
 console.log(result);
 `
-    }
+  }
 };
 
 /**
@@ -139,11 +139,11 @@ console.log(result);
  * @returns {string} The fallback starter code template
  */
 export function getStarterCode(language, mode = "function") {
-    const langTemplates = TEMPLATES[language];
-    if (!langTemplates) {
-        return "// TODO: implement solution\n";
-    }
+  const langTemplates = TEMPLATES[language];
+  if (!langTemplates) {
+    return "// TODO: implement solution\n";
+  }
 
-    const validMode = (mode === "function" || mode === "program") ? mode : "function";
-    return langTemplates[validMode] || langTemplates.function;
+  const validMode = (mode === "function" || mode === "program") ? mode : "function";
+  return langTemplates[validMode] || langTemplates.function;
 }

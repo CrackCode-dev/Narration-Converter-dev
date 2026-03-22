@@ -63,10 +63,10 @@ function findConstraintStart(text) {
 function extractExamples(text) {
   const examples = [];
 
-  // Find where constraints section begins — hard boundary for examples
+  // Find where constraints section begins - hard boundary for examples
   const constraintStart = findConstraintStart(text);
 
-  // ── Strategy 1: Match "Example N:" blocks ──
+  // Strategy 1: Match "Example N:" blocks 
   const exampleBlockRegex = /Example\s*\d*\s*:/gi;
   const splitPoints = [];
   let match;
@@ -92,7 +92,7 @@ function extractExamples(text) {
     }
   }
 
-  // ── Strategy 2: Look for Input/Output pairs without "Example:" headers ──
+  // Strategy 2: Look for Input/Output pairs without "Example:" headers 
   if (examples.length === 0) {
     const ioRegex = /Input\s*:\s*(.*?)(?:\n|$)\s*Output\s*:\s*(.*?)(?:\n|$)(?:\s*Explanation\s*:\s*(.*?)(?:\n\n|\n(?=Input)|$))?/gis;
     let ioMatch;
@@ -222,7 +222,7 @@ export function parseInputString(raw) {
         break;
       }
     } else {
-      // Scalar value — read until next comma + key pattern, or end
+      // Scalar value - read until next comma + key pattern, or end
       const nextKeyMatch = remaining.match(/,\s*(\w+)\s*=/);
       if (nextKeyMatch) {
         const scalarStr = remaining.slice(0, nextKeyMatch.index).trim();

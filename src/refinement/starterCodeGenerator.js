@@ -3,13 +3,10 @@ import { log } from "../utils/logger.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ═══════════════════════════════════════════════════════════════════
 // VALID MODES
-// ═══════════════════════════════════════════════════════════════════
 
 const VALID_MODES = ["function", "program"];
 
-// ═══════════════════════════════════════════════════════════════════
 // LANGUAGE PROMPTS — verbatim from STARTER_PROMPTS.md
 //
 // These are the exact system prompts prescribed by the spec.
@@ -19,7 +16,6 @@ const VALID_MODES = ["function", "program"];
 // The prompts instruct the model to produce ONLY a blank starter
 // template — no solution logic, no hints, no algorithm steps.
 // The user is expected to implement the solution themselves.
-// ═══════════════════════════════════════════════════════════════════
 
 const LANGUAGE_PROMPTS = {
 
@@ -106,9 +102,7 @@ int main() {
 Output only the source code — no explanations, no example runs, no tests.`
 };
 
-// ═══════════════════════════════════════════════════════════════════
 // PLACEHOLDER EXTRACTION FROM PROBLEM METADATA
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Returns the fixed function name required by the JudgeO harness.
@@ -271,9 +265,7 @@ function describeOutputFormat(problem) {
     return "Print the result.";
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // PLACEHOLDER SUBSTITUTION
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Fill all {{...}} placeholders in a prompt template with problem-derived values.
@@ -305,9 +297,7 @@ function buildPlaceholders(problem, language) {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // SYSTEM PROMPT BUILDER
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Build the system prompt by taking the verbatim MD prompt for this language
@@ -321,9 +311,7 @@ function buildSystemPrompt(language, problem) {
     return substitutePlaceholders(template, placeholders);
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // USER PROMPT BUILDER
-// ═══════════════════════════════════════════════════════════════════
 
 function buildUserPrompt(problem, language, mode) {
     const parts = [];
@@ -363,7 +351,7 @@ function buildUserPrompt(problem, language, mode) {
         parts.push(`\nCONSTRAINTS:\n${problem.constraints.map(c => `  - ${c}`).join("\n")}`);
     }
 
-    // ── Critical: enforce blank template rules ──
+    // Critical: enforce blank template rules 
     parts.push(`\nCRITICAL RULES:`);
     parts.push(`- The function MUST be named '${placeholders.FUNCTION_NAME}'.`);
     parts.push(`- Do NOT implement any solution logic. The function body must be empty — use \`pass\` (Python), \`return\` with a default value (JS/Java/C++), or \`/* implement */\` placeholder only.`);
@@ -376,9 +364,7 @@ function buildUserPrompt(problem, language, mode) {
     return parts.join("\n");
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // CODE CLEANUP
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Clean AI-generated code: strip markdown fences, normalize whitespace.
@@ -424,9 +410,7 @@ function cleanCode(raw) {
     return code;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // VALIDATION
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Check that the starter code has the correct `solve` function with
@@ -608,9 +592,7 @@ function validateModeStructure(code, language, mode) {
     return null; // OK
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // MAIN GENERATION FUNCTION
-// ═══════════════════════════════════════════════════════════════════
 
 /**
  * Generate a blank starter code template for a problem in a specific
@@ -638,7 +620,7 @@ export async function generateStarterCode(problem, language, mode = "function") 
 
     const userPrompt = buildUserPrompt(problem, language, mode);
 
-    // ── Attempt 1: Direct generation ──
+    // Attempt 1: Direct generation 
     try {
         const completion = await groq.chat.completions.create({
             messages: [
@@ -673,7 +655,7 @@ export async function generateStarterCode(problem, language, mode = "function") 
         log.warn(`[StarterCode] Attempt 1 failed for ${problem.problemId}:${language}:${mode}: ${error.message}`);
     }
 
-    // ── Attempt 2: Retry with reinforced blank-template rules ──
+    // Attempt 2: Retry with reinforced blank-template rules 
     try {
         const modeReminder = mode === "function"
             ? "IMPORTANT: This is a FUNCTION-STYLE problem. Do NOT include any main() runner, if __name__ block, or stdin reading. Output only the function signature with a placeholder body."
@@ -717,9 +699,7 @@ export async function generateStarterCode(problem, language, mode = "function") 
     return null;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // EXPORTED HELPERS (for external use / testing)
-// ═══════════════════════════════════════════════════════════════════
 
 export {
     deriveFunctionName,

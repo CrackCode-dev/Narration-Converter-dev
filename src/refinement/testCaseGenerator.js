@@ -5,7 +5,7 @@ import { parseInputString, parseValueString } from "../normalizer/descriptionPar
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /**
- * ── Test Case Generator ──
+ * Test Case Generator 
  *
  * Generates structured test cases for coding problems that lack them.
  * Uses the Groq LLM to analyze the problem description, examples, and
@@ -117,12 +117,12 @@ function normalizeTestCases(cases) {
 
     if (input === null || output === null) continue;
 
-    // ── Normalize input: string → typed object ──
+    // Normalize input: string → typed object 
     if (typeof input === "string") {
       input = parseInputString(input);
     }
 
-    // ── Normalize output: string → typed value ──
+    // Normalize output: string → typed value 
     if (typeof output === "string") {
       output = parseValueString(output);
     }
